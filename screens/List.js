@@ -1,6 +1,5 @@
-// import * as WebBrowser from 'expo-web-browser';
 import React, { Component } from "react";
-import { Button } from "react-native";
+import { withNavigationFocus } from "react-navigation";
 import {
   Image,
   Platform,
@@ -8,44 +7,83 @@ import {
   Text,
   TouchableOpacity,
   View,
-  TextInput
+  TextInput,
+  Button
 } from "react-native";
+require("firebase/firestore");
+const firebase = require("firebase");
+const db = firebase.firestore();
 
-export default class HomeScreen extends Component {
+class HomeScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
       text: "",
-      ItemList: []
-      // modalVisible: false,
+      ItemList: [],
+      userid: "",
+      modalVisible: false,
     };
   }
+  componentDidMount() {
+    const { navigation } = this.props;
+    this.focusListener = navigation.addListener("didFocus", () => {
+      // if(firebase.auth().currentUser != null){
+      //   var userid = firebase.auth().currentUser.uid;
+      this._getList();
+      // }
+    });
+  }
+  componentWillUnmount() {
+    // Remove the event listener
+    this.focusListener.remove();
+  }
+
   _getInput() {
     this.setState({ ItemList: [...this.state.ItemList, this.state.text] });
+    var userId = firebase.auth().currentUser.uid;
+    const ref = firebase
+      .firestore()
+      .collection("users")
+      .doc(userId)
+      .collection("Lists")
+      .doc("List name");
+    firebase
+      .firestore()
+      .runTransaction(async transaction => {
+        const doc = await transaction.get(ref);
+        transaction.update(ref, {
+          list: this.state.ItemList
+        });
+      })
   }
   _handleClick = pram => {
-    // this.setState({modalVisible: true});
-    this.setState({ editItemName: pram.item });
+    this.setState({modalVisible: true});
   };
 
-  _getList = userId => {
-    var docRef = db.collection("users").doc(userId);
-    var usersList;
-    docRef
-      .get()
-      .then(function(doc) {
-        if (doc.exists) {
-          var user = doc.data();
-          usersList = user.List[0].list1;
-          console.log(usersList);
-        }
-      })
-      .catch(function(error) {
-        console.log("Error getting document:", error);
-      })
-      .then(() => {
-        this.setState({ ItemList: usersList });
-      });
+  _getList = () => {
+    if (firebase.auth().currentUser != null) {
+      var userId = firebase.auth().currentUser.uid;
+      var docRef = db
+        .collection("users")
+        .doc(userId)
+        .collection("Lists")
+        .doc("List name");
+      var usersList;
+      docRef
+        .get()
+        .then(function(doc) {
+          if (doc.exists) {
+            user = doc.data();
+            usersList = user.list;
+          }
+        })
+        .catch(function(error) {
+          console.log("Error getting document:", error);
+        })
+        .then(() => {
+          this.setState({ ItemList: usersList });
+        });
+    }
   };
 
   _editItem() {
@@ -54,7 +92,7 @@ export default class HomeScreen extends Component {
     console.log("updated");
   }
   _deleteItem() {
-    console.log("deleted");
+    console.log(this.state.text);
   }
 
   _handleListChange = pram => {
@@ -93,8 +131,7 @@ export default class HomeScreen extends Component {
             </Button>
           ))}
         </View>
-        <View style={styles.container}>
-        </View>
+        <View style={styles.container}></View>
       </View>
     );
   }
@@ -133,3 +170,5 @@ const styles = StyleSheet.create({
     marginTop: 10
   }
 });
+
+export default HomeScreen;

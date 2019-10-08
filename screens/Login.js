@@ -1,5 +1,7 @@
 import React, { Component } from "react";
 import { Dimensions } from "react-native";
+// import listPage from "./List";
+// import appPage from "../app"
 import {
   Image,
   Platform,
@@ -11,17 +13,21 @@ import {
   Button,
   ScrollView
 } from "react-native";
+// require("firebase/firestore");
 const firebase = require("firebase");
+firebase.initializeApp({
+  apiKey: "AIzaSyBp5DHO2pXerW_HYQCklL5X286qqCrrH1U",
+  authDomain: "wheresthemilk-816ca.firebaseapp.com",
+  projectId: "wheresthemilk-816ca",
+  databaseURL: "https://wheresthemilk-816ca.firebaseio.com"
+});
 
-const width = Dimensions.get("window").width;
-const height = Dimensions.get("window").height;
-
-export default class Login extends Component {
+class Login extends Component {
   constructor(props) {
     super(props);
     this.state = {
       email: "",
-      password: ""
+      password: "",
     };
   }
 
@@ -35,9 +41,6 @@ export default class Login extends Component {
         alert(errorCode + " : " + errorMessage);
       })
       .then(() => {
-        userid = firebase.auth().currentUser.uid;
-        // this._getList(userid);
-        // console.log(userid);
       });
   };
 
@@ -61,7 +64,7 @@ export default class Login extends Component {
         <Button
           style={styles.button}
           title={"Login"}
-          onPress={() => this._login()}
+          onPress={() => this._Dologin()}
         ></Button>
         <Button title="Don't have an account yet? Sign up" />
       </ScrollView>
@@ -114,4 +117,4 @@ const styles = StyleSheet.create({
   }
 });
 
-// export default Login;
+export default Login;

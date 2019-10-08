@@ -19,13 +19,27 @@ import {
 
 import AppNavigator from "./navigation/AppNavigator";
 
-export default function App(props) {
-  return (
-    <View style={styles.container}>
-      {Platform.OS === "ios" && <StatusBar barStyle="default" />}
-      <AppNavigator />
-    </View>
-  );
+export default class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      test: "testhere"
+    };
+    // console.log(this.props.state)
+    // console.log(state)
+  }
+  _ChangeTest = () => {
+    console.log("gere")
+  }
+  render(){
+    return (
+      <View style={styles.container}>
+        {Platform.OS === "ios" && <StatusBar barStyle="default" />}
+        <AppNavigator />
+      </View>
+    );
+
+  }
 }
 
 const styles = StyleSheet.create({

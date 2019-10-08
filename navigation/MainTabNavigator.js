@@ -27,11 +27,7 @@ HomeStack.navigationOptions = {
   tabBarIcon: ({ focused }) => (
     <TabBarIcon
       focused={focused} //changes the color if on that page
-      name={
-        Platform.OS === "ios"
-          ? `ios-list`
-          : "md-list"
-      }
+      name={Platform.OS === "ios" ? `ios-list` : "md-list"}
     />
   )
 };
@@ -46,7 +42,7 @@ const LinksStack = createStackNavigator(
 );
 
 LinksStack.navigationOptions = {
-  tabBarLabel: "Links",
+  tabBarLabel: "Map",
   tabBarIcon: ({ focused }) => (
     <TabBarIcon
       focused={focused}
