@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Dimensions } from "react-native";
+// import { Dimensions } from "react-native";
 // import listPage from "./List";
 // import appPage from "../app"
 import {
@@ -53,6 +53,7 @@ class Login extends Component {
           onChangeText={email => this.setState({ email })}
           placeholder="Email"
           autoCapitalize="none"
+          keyboardType="email-address"
         />
         <TextInput
           style={styles.inputBox}
@@ -60,6 +61,7 @@ class Login extends Component {
           onChangeText={password => this.setState({ password })}
           placeholder="Password"
           secureTextEntry={true}
+          textContentType="password"
         />
         <Button
           style={styles.button}

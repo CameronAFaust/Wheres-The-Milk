@@ -21,32 +21,33 @@ class Signup extends React.Component {
   };
 
   _signup = () => {
-    try {
-      const response = firebase
-        .auth()
-        .createUserWithEmailAndPassword(this.state.email, this.state.password)
-        .then(() => {
-          userData = firebase.auth().currentUser;
-          if (userData.uid) {
-            const user = {
-              uid: userData.uid,
-              userName: this.state.email,
-              total: 500
-            };
-            db.collection("users")
-              .doc(userData.uid)
-              .set(user);
-            const List = {};
-            db.collection("users")
-              .doc(userData.uid)
-              .collection("Lists")
-              .doc("List name")
-              .set(List);
-          }
-        });
-    } catch (e) {
-      alert(e);
-    }
+    const response = firebase
+      .auth()
+      .createUserWithEmailAndPassword(this.state.email, this.state.password)
+      .catch(function(error) {
+        var errorCode = error.code;
+        var errorMessage = error.message;
+        alert(errorCode + " : " + errorMessage);
+      })
+      .then(() => {
+        userData = firebase.auth().currentUser;
+        if (userData.uid) {
+          const user = {
+            uid: userData.uid,
+            userName: this.state.email,
+            total: 500
+          };
+          db.collection("users")
+            .doc(userData.uid)
+            .set(user);
+          const List = {};
+          db.collection("users")
+            .doc(userData.uid)
+            .collection("Lists")
+            .doc("List name")
+            .set(List);
+        }
+      });
   };
 
   render() {
@@ -58,6 +59,7 @@ class Signup extends React.Component {
           onChangeText={email => this.setState({ email })}
           placeholder="Email"
           autoCapitalize="none"
+          keyboardType="email-address"
         />
         <TextInput
           style={styles.inputBox}
@@ -65,6 +67,7 @@ class Signup extends React.Component {
           onChangeText={password => this.setState({ password })}
           placeholder="Password"
           secureTextEntry={true}
+          textContentType="password"
         />
         <TouchableOpacity style={styles.button} onPress={() => this._signup()}>
           <Text style={styles.buttonText}>Signup</Text>

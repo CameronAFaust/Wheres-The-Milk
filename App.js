@@ -25,11 +25,6 @@ export default class App extends Component {
     this.state = {
       test: "testhere"
     };
-    // console.log(this.props.state)
-    // console.log(state)
-  }
-  _ChangeTest = () => {
-    console.log("gere")
   }
   render(){
     return (

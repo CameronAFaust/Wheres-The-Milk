@@ -34,14 +34,14 @@ HomeStack.navigationOptions = {
 
 HomeStack.path = "";
 
-const LinksStack = createStackNavigator(
+const MapStack = createStackNavigator(
   {
-    Links: HomeScreen
+    Map: HomeScreen
   },
   config
 );
 
-LinksStack.navigationOptions = {
+MapStack.navigationOptions = {
   tabBarLabel: "Map",
   tabBarIcon: ({ focused }) => (
     <TabBarIcon
@@ -51,16 +51,16 @@ LinksStack.navigationOptions = {
   )
 };
 
-LinksStack.path = "";
+MapStack.path = "";
 
-const SettingsStack = createStackNavigator(
+const ProfileStack = createStackNavigator(
   {
-    Settings: ProfileScreen
+    Profile: ProfileScreen
   },
   config
 );
 
-SettingsStack.navigationOptions = {
+ProfileStack.navigationOptions = {
   tabBarLabel: "Profile",
   tabBarIcon: ({ focused }) => (
     <TabBarIcon
@@ -70,12 +70,18 @@ SettingsStack.navigationOptions = {
   )
 };
 
-SettingsStack.path = "";
+ProfileStack.path = "";
+
+const LoginStack = createStackNavigator({
+  Login: { screen: "Login" }
+});
+
+LoginStack.path = "";
 
 const tabNavigator = createBottomTabNavigator({
   HomeStack,
-  LinksStack,
-  SettingsStack
+  MapStack,
+  ProfileStack
 });
 
 tabNavigator.path = "";

@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { withNavigationFocus } from "react-navigation";
+import { withNavigationFocus, Keyboard } from "react-navigation";
 import {
   Image,
   Platform,
@@ -9,7 +9,8 @@ import {
   View,
   TextInput,
   Button,
-  Modal
+  Modal,
+  ScrollView
 } from "react-native";
 require("firebase/firestore");
 const firebase = require("firebase");
@@ -27,35 +28,29 @@ class HomeScreen extends Component {
       Updatedtext: ""
     };
   }
-  componentDidMount() {
-    const { navigation } = this.props;
-    this.focusListener = navigation.addListener("didFocus", () => {
-      // if(firebase.auth().currentUser != null){
-      //   var userid = firebase.auth().currentUser.uid;
-      this._getList();
-      // }
-    });
-  }
-  componentWillUnmount() {
-    // Remove the event listener
-    this.focusListener.remove();
-  }
   _getInput() {
-    this.setState({ ItemList: [...this.state.ItemList, this.state.text] });
-    var userId = firebase.auth().currentUser.uid;
-    const update = {};
-    update[`${this.state.text}`] = this.state.text;
-    const ref = firebase
-      .firestore()
-      .collection("users")
-      .doc(userId)
-      .collection("Lists")
-      .doc("List name")
-      .set(update, { merge: true });
+    if (!this.state.ItemList.includes(this.state.text)) {
+      // console.log("does contain");
+      this.setState({ ItemList: [...this.state.ItemList, this.state.text] });
+      var userId = firebase.auth().currentUser.uid;
+      const update = {};
+      update[`${this.state.text}`] = this.state.text;
+      const ref = firebase
+        .firestore()
+        .collection("users")
+        .doc(userId)
+        .collection("Lists")
+        .doc("List name")
+        .set(update, { merge: true });
+    } else {
+      alert("Item already in list");
+    }
   }
   _getList = () => {
-    if (firebase.auth().currentUser != null) {
-      var userId = firebase.auth().currentUser.uid;
+    // console.log(this.state.userid);
+    if (this.state.userid != null) {
+      // var userId = firebase.auth().currentUser.uid;
+      var userId = this.state.userid;
       var docRef = db
         .collection("users")
         .doc(userId)
@@ -81,6 +76,33 @@ class HomeScreen extends Component {
         });
     }
   };
+  _getList = userid => {
+    var userId = firebase.auth().currentUser.uid;
+    var userId = userId;
+    var docRef = db
+      .collection("users")
+      .doc(userId)
+      .collection("Lists")
+      .doc("List name");
+    var usersList;
+    docRef
+      .get()
+      .then(function(doc) {
+        if (doc.exists) {
+          usersList = [];
+          user = doc.data();
+          for (var key in user) {
+            usersList.push(user[key]);
+          }
+        }
+      })
+      .catch(function(error) {
+        console.log("Error getting document:", error);
+      })
+      .then(() => {
+        this.setState({ ItemList: usersList });
+      });
+  };
   _handleClick = pram => {
     this.setState({ Updatedtext: pram.item });
     this.setState({ EditItem: pram.item });
@@ -88,16 +110,25 @@ class HomeScreen extends Component {
   };
   _editItem(original, Edited) {
     const update = {};
+    const del = {};
+    del[`${original}`] = firebase.firestore.FieldValue.delete();
     if (firebase.auth().currentUser != null) {
       var userId = firebase.auth().currentUser.uid;
-      update[`${original}`] = Edited;
       var docRef = db
         .collection("users")
         .doc(userId)
         .collection("Lists")
         .doc("List name")
-        .update(update);
+        .update(del);
+      update[`${Edited}`] = Edited;
+      var docRef = db
+        .collection("users")
+        .doc(userId)
+        .collection("Lists")
+        .doc("List name")
+        .set(update,{ merge: true });
     }
+    // this._getList();
     this.ShowModalFunction(false);
   }
   _deleteItem(item) {
@@ -111,28 +142,38 @@ class HomeScreen extends Component {
       .doc(userId)
       .collection("Lists")
       .doc("List name")
-      .update(
-        update
-        // ,
-        // { merge: true }
-      );
-    // console.log(this.state.text);
+      .update(update);
   }
   _handleListChange = pram => {
     this.setState({ ItemList: pram });
-    console.log(this.state.ItemList);
   };
-
   ShowModalFunction(visible) {
-    // this.state.Updatedtext
-    // this.setState({ Updatedtext: this.state.EditItem });
     this.setState({ ModalVisibleStatus: visible });
-    console.log(this.state.Updatedtext);
   }
-
+  componentDidMount() {
+    const { navigation } = this.props;
+    this.focusListener = navigation.addListener("didFocus", () => {
+      // console.log("loaded");
+      firebase.auth().onAuthStateChanged(user => {
+        if (user) {
+          // console.log("user");
+          var userId = firebase.auth().currentUser.uid;
+          this.setState({ userId: userId });
+          this._getList(userId);
+          // console.log(userId);
+        } else {
+          console.log("no user");
+        }
+      });
+    });
+  }
+  componentWillUnmount() {
+    // Remove the event listener
+    this.focusListener.remove();
+  }
   render() {
     return (
-      <View>
+      <ScrollView keyboardShouldPersistTaps="always" >
         <TextInput
           style={styles.searchBar}
           onChangeText={text => this.setState({ text })}
@@ -140,7 +181,10 @@ class HomeScreen extends Component {
           clearTextOnFocus={true}
         />
         <Button
-          onPress={() => this._getInput()}
+          onPress={() => {
+            this._getInput();
+            this._getList();
+          }}
           title="Enter"
           color="#841584"
           accessibilityLabel="Enter"
@@ -165,8 +209,8 @@ class HomeScreen extends Component {
             this.ShowModalFunction(!this.state.ModalVisibleStatus);
           }}
         >
-          <View
-            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          <ScrollView
+          // style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
           >
             <View style={styles.ModalInsideView}>
               <TextInput
@@ -174,18 +218,25 @@ class HomeScreen extends Component {
                 onChangeText={text => this.setState({ Updatedtext: text })}
                 value={this.state.Updatedtext}
                 clearTextOnFocus={false}
+                // returnKeyType="go"
               />
               <Button
-                onPress={() =>
-                  this._editItem(this.state.EditItem, this.state.Updatedtext)
-                }
+                onPress={() => {
+                  this._editItem(this.state.EditItem, this.state.Updatedtext);
+                  this._getList();
+                  this.setState({ EditItem: "" });
+                  this.setState({ Updatedtext: "" });
+                }}
                 title="Update"
                 style={styles.ListItem}
               >
                 Update
               </Button>
               <Button
-                onPress={() => this._deleteItem(this.state.EditItem)}
+                onPress={() => {
+                  this._deleteItem(this.state.EditItem);
+                  this._getList();
+                }}
                 title="Delete"
                 style={styles.ListItem}
               >
@@ -198,10 +249,10 @@ class HomeScreen extends Component {
                 }}
               />
             </View>
-          </View>
+          </ScrollView>
         </Modal>
         {/* <View style={styles.container}></View> */}
-      </View>
+      </ScrollView>
     );
   }
 }
