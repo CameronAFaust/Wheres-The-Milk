@@ -27,7 +27,7 @@ class Login extends Component {
     super(props);
     this.state = {
       email: "",
-      password: "",
+      password: ""
     };
   }
 
@@ -40,13 +40,12 @@ class Login extends Component {
         var errorMessage = error.message;
         alert(errorCode + " : " + errorMessage);
       })
-      .then(() => {
-      });
+      .then(() => {});
   };
 
   render() {
     return (
-      <ScrollView style={styles.container}>
+      <ScrollView keyboardShouldPersistTaps="always" style={styles.container}>
         <TextInput
           style={styles.inputBox}
           value={this.state.email}

@@ -126,7 +126,7 @@ class HomeScreen extends Component {
         .doc(userId)
         .collection("Lists")
         .doc("List name")
-        .set(update,{ merge: true });
+        .set(update, { merge: true });
     }
     // this._getList();
     this.ShowModalFunction(false);
@@ -173,7 +173,7 @@ class HomeScreen extends Component {
   }
   render() {
     return (
-      <ScrollView keyboardShouldPersistTaps="always" >
+      <ScrollView keyboardShouldPersistTaps="always">
         <TextInput
           style={styles.searchBar}
           onChangeText={text => this.setState({ text })}
@@ -210,7 +210,8 @@ class HomeScreen extends Component {
           }}
         >
           <ScrollView
-          // style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+            keyboardShouldPersistTaps="always"
+            // style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
           >
             <View style={styles.ModalInsideView}>
               <TextInput
