@@ -1,5 +1,3 @@
-import Login from "./screens/Login";
-import Signup from "./screens/Signup";
 import React, { Component } from "react";
 import {
   Platform,
@@ -16,16 +14,10 @@ import {
   Modal,
   TouchableHighlight
 } from "react-native";
-
+// import { createStackNavigator, createAppContainer } from 'react-navigation';
 import AppNavigator from "./navigation/AppNavigator";
 
 export default class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      test: "testhere"
-    };
-  }
   render(){
     return (
       <View style={styles.container}>

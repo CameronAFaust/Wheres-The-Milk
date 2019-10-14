@@ -47,7 +47,22 @@ class Signup extends React.Component {
             .doc("List name")
             .set(List);
         }
+      })
+      .then(() => {
+        this.props.navigation.navigate(
+          "Main",
+          {},
+          this.props.navigation.navigate({ routeName: "HomeStack" })
+        );
       });
+  };
+
+  _Cancel = () => {
+    this.props.navigation.navigate(
+      "Main",
+      {},
+      this.props.navigation.navigate({ routeName: "ProfileStack" })
+    );
   };
 
   render() {
@@ -72,10 +87,20 @@ class Signup extends React.Component {
         <TouchableOpacity style={styles.button} onPress={() => this._signup()}>
           <Text style={styles.buttonText}>Signup</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => this._Cancel()}
+        >
+          <Text style={styles.buttonText}>Cancel</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 }
+
+Signup.navigationOptions = {
+  title: null
+};
 
 const styles = StyleSheet.create({
   container: {

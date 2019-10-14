@@ -1,14 +1,17 @@
 import React from "react";
 import { Platform } from "react-native";
 import {
+  // SwitchNavigator,
   createStackNavigator,
   createBottomTabNavigator
 } from "react-navigation";
 
 import TabBarIcon from "../components/TabBarIcon";
 import HomeScreen from "../screens/List";
-import LinksScreen from "../screens/map";
-import ProfileScreen from "../screens/Login";
+import mapScreen from "../screens/map";
+import ProfileScreen from "../screens/Profile";
+import LoginScreen from "../screens/Login";
+import SignupScreen from "../screens/Signup";
 
 const config = Platform.select({
   web: { headerMode: "screen" },
@@ -72,16 +75,30 @@ ProfileStack.navigationOptions = {
 
 ProfileStack.path = "";
 
-const LoginStack = createStackNavigator({
-  Login: { screen: "Login" }
-});
+// const LoginStack = createStackNavigator(
+//   {
+//     Login: LoginScreen
+//   },
+// );
+// LoginStack.path = "";
 
-LoginStack.path = "";
+// LoginStack.navigationOptions = {
+//   null
+// };
+
+// const SignupStack = createStackNavigator(
+//   {
+//     SignUp: SignupScreen
+//   },
+// );
+
+// SignupStack.path = "";
 
 const tabNavigator = createBottomTabNavigator({
   HomeStack,
   MapStack,
-  ProfileStack
+  ProfileStack,
+  // SignupStack
 });
 
 tabNavigator.path = "";

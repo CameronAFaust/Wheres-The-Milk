@@ -15,12 +15,12 @@ import {
 } from "react-native";
 // require("firebase/firestore");
 const firebase = require("firebase");
-firebase.initializeApp({
-  apiKey: "AIzaSyBp5DHO2pXerW_HYQCklL5X286qqCrrH1U",
-  authDomain: "wheresthemilk-816ca.firebaseapp.com",
-  projectId: "wheresthemilk-816ca",
-  databaseURL: "https://wheresthemilk-816ca.firebaseio.com"
-});
+// firebase.initializeApp({
+//   apiKey: "AIzaSyBp5DHO2pXerW_HYQCklL5X286qqCrrH1U",
+//   authDomain: "wheresthemilk-816ca.firebaseapp.com",
+//   projectId: "wheresthemilk-816ca",
+//   databaseURL: "https://wheresthemilk-816ca.firebaseio.com"
+// });
 
 class Login extends Component {
   constructor(props) {
@@ -29,6 +29,13 @@ class Login extends Component {
       email: "",
       password: ""
     };
+  }
+
+  goToSignup() {
+    this.props.navigator.push({
+      component: Signup
+    });
+    console.log("this.props.navigator")
   }
 
   _Dologin = () => {
@@ -66,8 +73,16 @@ class Login extends Component {
           style={styles.button}
           title={"Login"}
           onPress={() => this._Dologin()}
-        ></Button>
-        <Button title="Don't have an account yet? Sign up" />
+        >
+          Login
+        </Button>
+        <Button
+          style={styles.button}
+          title={"Sign up"}
+          onPress={() => this.goToSignup()}
+        >
+          Sign up
+        </Button>
       </ScrollView>
     );
   }
@@ -76,46 +91,5 @@ class Login extends Component {
 Login.navigationOptions = {
   header: null
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    // height: 500,
-    backgroundColor: "#fff"
-    // alignItems: "center",
-    // justifyContent: "center"
-  },
-  inputBox: {
-    // flex: 1,
-    width: "80%",
-    // marginLeft: 20,
-    padding: 15,
-    borderRadius: 4,
-    borderWidth: 0.5,
-    borderColor: "#d6d7da",
-    backgroundColor: "#fff",
-    alignSelf: "center",
-    marginTop: 50
-  },
-  button: {
-    marginTop: 30,
-    marginBottom: 20,
-    paddingVertical: 5,
-    alignItems: "center",
-    backgroundColor: "#F6820D",
-    borderColor: "#F6820D",
-    borderWidth: 1,
-    borderRadius: 5,
-    width: 200
-  },
-  buttonText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#fff"
-  },
-  buttonSignup: {
-    fontSize: 12
-  }
-});
 
 export default Login;

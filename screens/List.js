@@ -14,7 +14,14 @@ import {
 } from "react-native";
 require("firebase/firestore");
 const firebase = require("firebase");
+firebase.initializeApp({
+  apiKey: "AIzaSyBp5DHO2pXerW_HYQCklL5X286qqCrrH1U",
+  authDomain: "wheresthemilk-816ca.firebaseapp.com",
+  projectId: "wheresthemilk-816ca",
+  databaseURL: "https://wheresthemilk-816ca.firebaseio.com"
+});
 const db = firebase.firestore();
+
 
 class HomeScreen extends Component {
   constructor(props) {
@@ -153,7 +160,7 @@ class HomeScreen extends Component {
   componentDidMount() {
     const { navigation } = this.props;
     this.focusListener = navigation.addListener("didFocus", () => {
-      // console.log("loaded");
+      // console.log("loaded: " + payload.state);
       firebase.auth().onAuthStateChanged(user => {
         if (user) {
           // console.log("user");
@@ -162,13 +169,12 @@ class HomeScreen extends Component {
           this._getList(userId);
           // console.log(userId);
         } else {
-          console.log("no user");
+          // console.log("no user");
         }
       });
     });
   }
   componentWillUnmount() {
-    // Remove the event listener
     this.focusListener.remove();
   }
   render() {

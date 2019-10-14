@@ -1,9 +1,9 @@
 {
+  "expoServerNgrokUrl": "https://2q-72n.anonymous.where-s-the-milk.exp.direct",
+  "packagerNgrokUrl": "https://packager.2q-72n.anonymous.where-s-the-milk.exp.direct",
+  "ngrokPid": 3856,
   "devToolsPort": 19002,
   "expoServerPort": 19000,
   "packagerPort": 19001,
-  "packagerPid": 14160,
-  "expoServerNgrokUrl": "https://2q-72n.anonymous.where-s-the-milk.exp.direct",
-  "packagerNgrokUrl": "https://packager.2q-72n.anonymous.where-s-the-milk.exp.direct",
-  "ngrokPid": 17444
+  "packagerPid": 4640
 }
