@@ -21,7 +21,7 @@ class Signup extends React.Component {
   };
 
   _signup = () => {
-    const response = firebase
+    firebase
       .auth()
       .createUserWithEmailAndPassword(this.state.email, this.state.password)
       .catch(function(error) {
@@ -31,7 +31,7 @@ class Signup extends React.Component {
       })
       .then(() => {
         userData = firebase.auth().currentUser;
-        if (userData.uid) {
+        if (userData != null) {
           const user = {
             uid: userData.uid,
             userName: this.state.email,
@@ -49,11 +49,14 @@ class Signup extends React.Component {
         }
       })
       .then(() => {
-        this.props.navigation.navigate(
-          "Main",
-          {},
-          this.props.navigation.navigate({ routeName: "HomeStack" })
-        );
+        userData = firebase.auth().currentUser;
+        if (userData != null) {
+          this.props.navigation.navigate(
+            "Main",
+            {},
+            this.props.navigation.navigate({ routeName: "HomeStack" })
+          );
+        }
       });
   };
 
@@ -87,10 +90,7 @@ class Signup extends React.Component {
         <TouchableOpacity style={styles.button} onPress={() => this._signup()}>
           <Text style={styles.buttonText}>Signup</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => this._Cancel()}
-        >
+        <TouchableOpacity style={styles.button} onPress={() => this._Cancel()}>
           <Text style={styles.buttonText}>Cancel</Text>
         </TouchableOpacity>
       </View>
