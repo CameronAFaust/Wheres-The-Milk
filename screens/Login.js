@@ -1,7 +1,4 @@
 import React, { Component } from "react";
-// import { Dimensions } from "react-native";
-// import listPage from "./List";
-// import appPage from "../app"
 import {
   Image,
   Platform,
@@ -13,14 +10,7 @@ import {
   Button,
   ScrollView
 } from "react-native";
-// require("firebase/firestore");
 const firebase = require("firebase");
-// firebase.initializeApp({
-//   apiKey: "AIzaSyBp5DHO2pXerW_HYQCklL5X286qqCrrH1U",
-//   authDomain: "wheresthemilk-816ca.firebaseapp.com",
-//   projectId: "wheresthemilk-816ca",
-//   databaseURL: "https://wheresthemilk-816ca.firebaseio.com"
-// });
 
 class Login extends Component {
   constructor(props) {

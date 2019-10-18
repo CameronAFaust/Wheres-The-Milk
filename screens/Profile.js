@@ -26,7 +26,7 @@ class Profile extends Component {
     };
   }
   goToSignup = () => {
-    this.props.navigation.navigate('App');
+    this.props.navigation.navigate('SignUp');
   };
   _Dologin = () => {
     firebase
@@ -158,7 +158,6 @@ class Profile extends Component {
         </ScrollView>
       );
     } else {
-      // console.log(navigate(SignupScreen))
       return (
         <ScrollView keyboardShouldPersistTaps="always" style={styles.container}>
           <TextInput
@@ -188,15 +187,7 @@ class Profile extends Component {
             onPress={this.goToSignup.bind(this)}
           >
             Signup
-            {/* <Text>Signup</Text> */}
           </Button>
-          {/* <Button
-            style={styles.button}
-            title={"Sign up"}
-            onPress={this.goToSignup.bind(this)}
-          >
-            Sign up
-          </Button> */}
         </ScrollView>
       );
     }

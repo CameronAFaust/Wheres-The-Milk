@@ -1,8 +1,6 @@
 import React, { Component } from "react";
 import { withNavigationFocus, Keyboard } from "react-navigation";
 import {
-  Image,
-  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -10,7 +8,9 @@ import {
   TextInput,
   Button,
   Modal,
-  ScrollView
+  ScrollView,
+  FlatList,
+  TouchableWithoutFeedback
 } from "react-native";
 require("firebase/firestore");
 const firebase = require("firebase");
@@ -22,6 +22,47 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 
+// function Item({ title }) {
+//   return (
+//     <View style={styles.item}>
+//       <Button title={title} accessibilityLabel={title}></Button>
+//     </View>
+//   );
+// }
+function PriceItems(items) {
+  // console.log(item);
+  var xhr = new XMLHttpRequest();
+
+  var ingredientList = "";
+  items.forEach(item => {
+    ingredientList += `${item}\n`;
+  });
+  var data = `ingredientList=${ingredientList}&servings=1`;
+  // console.log(data);
+
+  xhr.withCredentials = true;
+
+  xhr.onload = loadComplete = () => {
+    // console.log(JSON.parse(xhr.responseText)); //want price
+    return JSON.parse(xhr.responseText);
+  };
+
+  xhr.open(
+    "POST",
+    "https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/recipes/parseIngredients"
+  );
+  xhr.setRequestHeader(
+    "x-rapidapi-host",
+    "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com"
+  );
+  xhr.setRequestHeader(
+    "x-rapidapi-key",
+    "22565bcaa7msh7b316a0ef99472ap164e6cjsn2841a03ec9cd"
+  );
+  xhr.setRequestHeader("content-type", "application/x-www-form-urlencoded");
+
+  xhr.send(data);
+}
 
 class HomeScreen extends Component {
   constructor(props) {
@@ -29,19 +70,63 @@ class HomeScreen extends Component {
     this.state = {
       text: "",
       ItemList: [],
+      ItemListPrices: [],
       userid: "",
       ModalVisibleStatus: false,
       EditItem: "",
-      Updatedtext: ""
+      Updatedtext: "",
+      SelectedList: "",
+      searchedAdresses: [],
+      CompleteData: []
     };
   }
-  _getInput() {
-    if (!this.state.ItemList.includes(this.state.text)) {
+  searchedAdresses = searchedText => {
+    if (searchedText == "") {
+      this.setState({ searchedAdresses: [] });
+    } else {
+      this.GetAuto(searchedText);
+    }
+  };
+  SetAuto = data => {
+    this.setState({ CompleteData: data });
+    var searchedAdresses = [];
+    data.forEach(item => {
+      searchedAdresses.push(item.name);
+    });
+    this.setState({ searchedAdresses: searchedAdresses });
+    // console.log(searchedAdresses);
+  };
+  GetAuto = input => {
+    var data = null;
+
+    var xhr = new XMLHttpRequest();
+    xhr.withCredentials = true;
+
+    xhr.onload = loadComplete = () => {
+      this.SetAuto(JSON.parse(xhr.responseText));
+    };
+    xhr.open(
+      "GET",
+      `https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/food/ingredients/autocomplete?number=5&query=${input}`
+    );
+    xhr.setRequestHeader(
+      "x-rapidapi-host",
+      "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com"
+    );
+    xhr.setRequestHeader(
+      "x-rapidapi-key",
+      "22565bcaa7msh7b316a0ef99472ap164e6cjsn2841a03ec9cd"
+    );
+
+    xhr.send(data);
+  };
+  _getInput(item) {
+    if (!this.state.ItemList.includes(item)) {
       // console.log("does contain");
-      this.setState({ ItemList: [...this.state.ItemList, this.state.text] });
+      this.setState({ ItemList: [...this.state.ItemList, item] });
       var userId = firebase.auth().currentUser.uid;
       const update = {};
-      update[`${this.state.text}`] = this.state.text;
+      update[`${item}`] = item;
       const ref = firebase
         .firestore()
         .collection("users")
@@ -97,6 +182,7 @@ class HomeScreen extends Component {
       .then(function(doc) {
         if (doc.exists) {
           usersList = [];
+          // priceList = [];
           user = doc.data();
           for (var key in user) {
             usersList.push(user[key]);
@@ -108,9 +194,24 @@ class HomeScreen extends Component {
       })
       .then(() => {
         this.setState({ ItemList: usersList });
+        PriceItems(usersList);
       });
   };
+  _getPrices = list => {
+    // console.log(list);
+    list.forEach(item => {
+      // loadData();
+    });
+    //  for each item in list
+    //  `https://api.spoonacular.com/food/products/search?query=${item}`
+    //  if none return null, or nothing else:
+    //  get id of item
+    // `https://api.spoonacular.com/food/products/${id}?apiKey=5565c2ccd2f1482e830f5b68bef337de`
+    //  estimatedCost.value
+    // set state of new list with item: price
+  };
   _handleClick = pram => {
+    // console.log(this.state.ItemList);
     this.setState({ Updatedtext: pram.item });
     this.setState({ EditItem: pram.item });
     this.ShowModalFunction();
@@ -163,13 +264,9 @@ class HomeScreen extends Component {
       // console.log("loaded: " + payload.state);
       firebase.auth().onAuthStateChanged(user => {
         if (user) {
-          // console.log("user");
           var userId = firebase.auth().currentUser.uid;
           this.setState({ userId: userId });
           this._getList(userId);
-          // console.log(userId);
-        } else {
-          // console.log("no user");
         }
       });
     });
@@ -180,15 +277,49 @@ class HomeScreen extends Component {
   render() {
     return (
       <ScrollView keyboardShouldPersistTaps="always">
+        <Button
+          onPress={() => {
+            this.props.navigation.navigate(
+              "App",
+              {},
+              this.props.navigation.navigate({ routeName: "ListSelection" })
+            );
+          }}
+          title="Change List"
+          color="#841584"
+          accessibilityLabel="Change List"
+        ></Button>
         <TextInput
           style={styles.searchBar}
-          onChangeText={text => this.setState({ text })}
+          // onChangeText={this.searchedAdresses}
+          onChangeText={text => {
+            this.searchedAdresses(text);
+            this.setState({ text });
+          }}
           value={this.state.text}
           clearTextOnFocus={true}
         />
+        <FlatList
+          data={this.state.searchedAdresses}
+          renderItem={({ item }) => (
+            <View style={styles.item}>
+              <Button
+                onPress={() => {
+                  var temp = item;
+                  this.setState({ text: temp });
+                  this._getInput(temp);
+                  this._getList();
+                }}
+                title={item}
+                accessibilityLabel={item}
+              ></Button>
+            </View>
+          )}
+          keyExtractor={item => item}
+        />
         <Button
           onPress={() => {
-            this._getInput();
+            this._getInput(this.state.text);
             this._getList();
           }}
           title="Enter"
@@ -203,7 +334,7 @@ class HomeScreen extends Component {
               key={key}
               style={styles.ListItem}
             >
-              {item}
+              {item} {}
             </Button>
           ))}
         </View>
@@ -258,7 +389,6 @@ class HomeScreen extends Component {
             </View>
           </ScrollView>
         </Modal>
-        {/* <View style={styles.container}></View> */}
       </ScrollView>
     );
   }

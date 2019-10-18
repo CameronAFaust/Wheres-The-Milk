@@ -10,8 +10,6 @@ import TabBarIcon from "../components/TabBarIcon";
 import HomeScreen from "../screens/List";
 import mapScreen from "../screens/map";
 import ProfileScreen from "../screens/Profile";
-import LoginScreen from "../screens/Login";
-import SignupScreen from "../screens/Signup";
 
 const config = Platform.select({
   web: { headerMode: "screen" },
@@ -75,30 +73,10 @@ ProfileStack.navigationOptions = {
 
 ProfileStack.path = "";
 
-// const LoginStack = createStackNavigator(
-//   {
-//     Login: LoginScreen
-//   },
-// );
-// LoginStack.path = "";
-
-// LoginStack.navigationOptions = {
-//   null
-// };
-
-// const SignupStack = createStackNavigator(
-//   {
-//     SignUp: SignupScreen
-//   },
-// );
-
-// SignupStack.path = "";
-
 const tabNavigator = createBottomTabNavigator({
   HomeStack,
   MapStack,
   ProfileStack,
-  // SignupStack
 });
 
 tabNavigator.path = "";
