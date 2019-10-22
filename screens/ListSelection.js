@@ -113,6 +113,32 @@ class ListSelection extends Component {
         this.setState({ Lists: usersList });
       });
   }
+  // get text from users clipboard, create new list with inputed data
+  readFromClipboard = async () => {
+    const clipboardContent = await Clipboard.getString();
+    // this.setState({ clipboardContent });
+    var temp = clipboardContent
+      .slice(1, clipboardContent.length - 1)
+      .split(",");
+    var importedArray = [];
+    temp.forEach(item => {
+      importedArray.push(item.trim());
+    });
+    var ListName = "imported List"
+    var userId = firebase.auth().currentUser.uid;
+    var docRef = db
+      .collection("users")
+      .doc(userId)
+      .set(
+        {
+          Lists: {
+            [ListName]: importedArray
+          }
+        },
+        { merge: true }
+      );
+    this._changeClick(ListName);
+  };
 
   render() {
     return (
@@ -191,6 +217,18 @@ class ListSelection extends Component {
             }}
             value={this.state.text}
             clearTextOnFocus={true}
+          />
+          <Button
+            onPress={() => {
+              this.readFromClipboard();
+              // console.log(this.state.clipboardContent)
+              // this.setState({ clipboardContent });
+              // this.ShowNewListModal(false);
+              // this._newList(this.state.text);
+            }}
+            title="Import List from clipboard"
+            color="#841584"
+            accessibilityLabel="Import List from clipboard"
           />
           <Button
             onPress={() => {

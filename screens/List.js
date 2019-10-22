@@ -82,13 +82,10 @@ class HomeScreen extends Component {
   };
   //get first list in users DB
   _getList = () => {
-    var userId = firebase.auth().currentUser.uid;
     var ListName = this.state.ListName;
-    var userId = userId;
-    var docRef = db.collection("users").doc(userId);
-    // .collection("Lists")
-    // .doc("List name");
+    var userId = firebase.auth().currentUser.uid;
     var usersList;
+    var docRef = db.collection("users").doc(userId);
     docRef
       .get()
       .then(function(doc) {
@@ -117,7 +114,7 @@ class HomeScreen extends Component {
   };
   // add item to list
   _getInput(item) {
-    SelectedList = this.state.ListName
+    SelectedList = this.state.ListName;
     if (!this.state.ItemList.includes(item)) {
       this.setState({ ItemList: [...this.state.ItemList, item] });
       var userId = firebase.auth().currentUser.uid;
@@ -139,7 +136,7 @@ class HomeScreen extends Component {
   }
   //get original item and edit it to new item
   _editItem(original, Edited) {
-    SelectedList = this.state.ListName
+    SelectedList = this.state.ListName;
     if (firebase.auth().currentUser != null) {
       var userId = firebase.auth().currentUser.uid;
       var docRef = db
@@ -148,7 +145,9 @@ class HomeScreen extends Component {
         .set(
           {
             Lists: {
-              [SelectedList]: firebase.firestore.FieldValue.arrayRemove(original)
+              [SelectedList]: firebase.firestore.FieldValue.arrayRemove(
+                original
+              )
             }
           },
           { merge: true }
@@ -172,7 +171,7 @@ class HomeScreen extends Component {
   _deleteItem(item) {
     // const update = {};
     // update[`${item}`] = firebase.firestore.FieldValue.delete();
-    SelectedList = this.state.ListName
+    SelectedList = this.state.ListName;
     var userId = firebase.auth().currentUser.uid;
     var docRef = db
       .collection("users")
@@ -272,7 +271,7 @@ class HomeScreen extends Component {
     // console.log(ListName);
     if (ListName.item != undefined) {
       // console.log(ListName.item)
-      ListName = ListName.item
+      ListName = ListName.item;
     }
     this.setState({
       ListName: ListName
