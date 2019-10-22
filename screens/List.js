@@ -22,48 +22,6 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 
-// function Item({ title }) {
-//   return (
-//     <View style={styles.item}>
-//       <Button title={title} accessibilityLabel={title}></Button>
-//     </View>
-//   );
-// }
-function PriceItems(items) {
-  // console.log(item);
-  var xhr = new XMLHttpRequest();
-
-  var ingredientList = "";
-  items.forEach(item => {
-    ingredientList += `${item}\n`;
-  });
-  var data = `ingredientList=${ingredientList}&servings=1`;
-  // console.log(data);
-
-  xhr.withCredentials = true;
-
-  xhr.onload = loadComplete = () => {
-    // console.log(JSON.parse(xhr.responseText)); //want price
-    return JSON.parse(xhr.responseText);
-  };
-
-  xhr.open(
-    "POST",
-    "https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/recipes/parseIngredients"
-  );
-  xhr.setRequestHeader(
-    "x-rapidapi-host",
-    "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com"
-  );
-  xhr.setRequestHeader(
-    "x-rapidapi-key",
-    "22565bcaa7msh7b316a0ef99472ap164e6cjsn2841a03ec9cd"
-  );
-  xhr.setRequestHeader("content-type", "application/x-www-form-urlencoded");
-
-  xhr.send(data);
-}
-
 class HomeScreen extends Component {
   constructor(props) {
     super(props);
@@ -77,7 +35,9 @@ class HomeScreen extends Component {
       Updatedtext: "",
       SelectedList: "",
       searchedAdresses: [],
-      CompleteData: []
+      CompleteData: [],
+      ItemPrice: [],
+      ListName: ""
     };
   }
   searchedAdresses = searchedText => {
@@ -120,72 +80,29 @@ class HomeScreen extends Component {
 
     xhr.send(data);
   };
-  _getInput(item) {
-    if (!this.state.ItemList.includes(item)) {
-      // console.log("does contain");
-      this.setState({ ItemList: [...this.state.ItemList, item] });
-      var userId = firebase.auth().currentUser.uid;
-      const update = {};
-      update[`${item}`] = item;
-      const ref = firebase
-        .firestore()
-        .collection("users")
-        .doc(userId)
-        .collection("Lists")
-        .doc("List name")
-        .set(update, { merge: true });
-    } else {
-      alert("Item already in list");
-    }
-  }
+  //get first list in users DB
   _getList = () => {
-    // console.log(this.state.userid);
-    if (this.state.userid != null) {
-      // var userId = firebase.auth().currentUser.uid;
-      var userId = this.state.userid;
-      var docRef = db
-        .collection("users")
-        .doc(userId)
-        .collection("Lists")
-        .doc("List name");
-      var usersList;
-      docRef
-        .get()
-        .then(function(doc) {
-          if (doc.exists) {
-            usersList = [];
-            user = doc.data();
-            for (var key in user) {
-              usersList.push(user[key]);
-            }
-          }
-        })
-        .catch(function(error) {
-          console.log("Error getting document:", error);
-        })
-        .then(() => {
-          this.setState({ ItemList: usersList });
-        });
-    }
-  };
-  _getList = userid => {
     var userId = firebase.auth().currentUser.uid;
+    var ListName = this.state.ListName;
     var userId = userId;
-    var docRef = db
-      .collection("users")
-      .doc(userId)
-      .collection("Lists")
-      .doc("List name");
+    var docRef = db.collection("users").doc(userId);
+    // .collection("Lists")
+    // .doc("List name");
     var usersList;
     docRef
       .get()
       .then(function(doc) {
+        //get items from DB and add to usersList
         if (doc.exists) {
           usersList = [];
-          // priceList = [];
           user = doc.data();
-          for (var key in user) {
-            usersList.push(user[key]);
+          for (var key in user.Lists) {
+            if (key == ListName) {
+              user.Lists[key].forEach(item => {
+                usersList.push(item);
+              });
+              break;
+            }
           }
         }
       })
@@ -193,10 +110,83 @@ class HomeScreen extends Component {
         console.log("Error getting document:", error);
       })
       .then(() => {
+        // this.PriceItems(usersList);
+        this.setState({ ListName: ListName });
         this.setState({ ItemList: usersList });
-        PriceItems(usersList);
       });
   };
+  // add item to list
+  _getInput(item) {
+    SelectedList = this.state.ListName
+    if (!this.state.ItemList.includes(item)) {
+      this.setState({ ItemList: [...this.state.ItemList, item] });
+      var userId = firebase.auth().currentUser.uid;
+      const ref = firebase
+        .firestore()
+        .collection("users")
+        .doc(userId)
+        .set(
+          {
+            Lists: {
+              [SelectedList]: firebase.firestore.FieldValue.arrayUnion(item)
+            }
+          },
+          { merge: true }
+        );
+    } else {
+      alert("Item already in list");
+    }
+  }
+  //get original item and edit it to new item
+  _editItem(original, Edited) {
+    SelectedList = this.state.ListName
+    if (firebase.auth().currentUser != null) {
+      var userId = firebase.auth().currentUser.uid;
+      var docRef = db
+        .collection("users")
+        .doc(userId)
+        .set(
+          {
+            Lists: {
+              [SelectedList]: firebase.firestore.FieldValue.arrayRemove(original)
+            }
+          },
+          { merge: true }
+        );
+      var docRef = db
+        .collection("users")
+        .doc(userId)
+        .set(
+          {
+            Lists: {
+              [SelectedList]: firebase.firestore.FieldValue.arrayUnion(Edited)
+            }
+          },
+          { merge: true }
+        );
+    }
+    // this._getList();
+    this.ShowModalFunction(false);
+  }
+  //remove item
+  _deleteItem(item) {
+    // const update = {};
+    // update[`${item}`] = firebase.firestore.FieldValue.delete();
+    SelectedList = this.state.ListName
+    var userId = firebase.auth().currentUser.uid;
+    var docRef = db
+      .collection("users")
+      .doc(userId)
+      .set(
+        {
+          Lists: {
+            [SelectedList]: firebase.firestore.FieldValue.arrayRemove(item)
+          }
+        },
+        { merge: true }
+      );
+    this.ShowModalFunction(false);
+  }
   _getPrices = list => {
     // console.log(list);
     list.forEach(item => {
@@ -210,63 +200,91 @@ class HomeScreen extends Component {
     //  estimatedCost.value
     // set state of new list with item: price
   };
-  _handleClick = pram => {
+  _ItemModal = pram => {
     // console.log(this.state.ItemList);
     this.setState({ Updatedtext: pram.item });
     this.setState({ EditItem: pram.item });
     this.ShowModalFunction();
   };
-  _editItem(original, Edited) {
-    const update = {};
-    const del = {};
-    del[`${original}`] = firebase.firestore.FieldValue.delete();
-    if (firebase.auth().currentUser != null) {
-      var userId = firebase.auth().currentUser.uid;
-      var docRef = db
-        .collection("users")
-        .doc(userId)
-        .collection("Lists")
-        .doc("List name")
-        .update(del);
-      update[`${Edited}`] = Edited;
-      var docRef = db
-        .collection("users")
-        .doc(userId)
-        .collection("Lists")
-        .doc("List name")
-        .set(update, { merge: true });
-    }
-    // this._getList();
-    this.ShowModalFunction(false);
-  }
-  _deleteItem(item) {
-    const update = {};
-    update[`${item}`] = firebase.firestore.FieldValue.delete();
-    var userId = firebase.auth().currentUser.uid;
-
-    const ref = firebase
-      .firestore()
-      .collection("users")
-      .doc(userId)
-      .collection("Lists")
-      .doc("List name")
-      .update(update);
-  }
   _handleListChange = pram => {
     this.setState({ ItemList: pram });
   };
   ShowModalFunction(visible) {
     this.setState({ ModalVisibleStatus: visible });
   }
+  PriceItems = items => {
+    // console.log(item);
+    var xhr = new XMLHttpRequest();
+
+    var ingredientList = "";
+    items.forEach(item => {
+      ingredientList += encodeURIComponent(item.trim()) + "\n";
+    });
+    var data = `ingredientList=${ingredientList}&servings=6`;
+    // console.log(data);
+
+    xhr.withCredentials = true;
+
+    xhr.onload = loadComplete = () => {
+      var response = JSON.parse(xhr.responseText);
+      response.forEach(item => {
+        var obj = {};
+        var key = JSON.stringify(item.originalName);
+        if (item.estimatedCost !== undefined) {
+          key = key.substring(1, key.length - 1);
+          obj[key] = JSON.stringify(item.estimatedCost.value) / 100;
+          this.state.ItemPrice.push(obj);
+          // this.state.ItemPrice.push(
+          //   JSON.stringify(item.estimatedCost.value) / 100
+          // );
+        } else {
+          key = key.substring(1, key.length - 1);
+          obj[key] = " ";
+          this.state.ItemPrice.push(obj);
+        }
+      });
+      // console.log(this.state.ItemPrice[0]);
+      // console.log(JSON.stringify(this.state.ItemPrice)["tuna"]);
+      this.setState({ state: this.state });
+      // return JSON.parse(xhr.responseText);
+    };
+
+    xhr.open(
+      "POST",
+      "https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/recipes/parseIngredients"
+    );
+    xhr.setRequestHeader(
+      "x-rapidapi-host",
+      "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com"
+    );
+    xhr.setRequestHeader(
+      "x-rapidapi-key",
+      "22565bcaa7msh7b316a0ef99472ap164e6cjsn2841a03ec9cd"
+    );
+    xhr.setRequestHeader("content-type", "application/x-www-form-urlencoded");
+
+    xhr.send(data);
+  };
   componentDidMount() {
     const { navigation } = this.props;
+    let ListName = this.props.navigation.getParam("name", "List 1");
+    // console.log("props ");
+    // console.log(ListName);
+    if (ListName.item != undefined) {
+      // console.log(ListName.item)
+      ListName = ListName.item
+    }
+    this.setState({
+      ListName: ListName
+    });
     this.focusListener = navigation.addListener("didFocus", () => {
-      // console.log("loaded: " + payload.state);
       firebase.auth().onAuthStateChanged(user => {
         if (user) {
           var userId = firebase.auth().currentUser.uid;
           this.setState({ userId: userId });
-          this._getList(userId);
+          // console.log("state ");
+          console.log(this.state.ListName);
+          this._getList();
         }
       });
     });
@@ -329,13 +347,15 @@ class HomeScreen extends Component {
         <View>
           {this.state.ItemList.map((item, key) => (
             <Button
-              onPress={() => this._handleClick({ item })}
-              title={item}
+              onPress={() => this._ItemModal({ item })}
+              title={`${item} ${
+                JSON.stringify(this.state.ItemPrice[key]) !== undefined
+                  ? " - " + this.state.ItemPrice[item]
+                  : ""
+              }`}
               key={key}
               style={styles.ListItem}
-            >
-              {item} {}
-            </Button>
+            ></Button>
           ))}
         </View>
         <Modal
@@ -383,7 +403,7 @@ class HomeScreen extends Component {
               <Button
                 title="Click Here To Hide Modal"
                 onPress={() => {
-                  this.ShowModalFunction(!this.state.ModalVisibleStatus);
+                  this.ShowModalFunction(false);
                 }}
               />
             </View>

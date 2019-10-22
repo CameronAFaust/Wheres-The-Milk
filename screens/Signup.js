@@ -33,6 +33,11 @@ class Signup extends React.Component {
         userData = firebase.auth().currentUser;
         if (userData != null) {
           const user = {
+            Lists: [
+              {
+                "List 1": []
+              }
+            ],
             uid: userData.uid,
             userName: this.state.email,
             total: 500
@@ -41,11 +46,7 @@ class Signup extends React.Component {
             .doc(userData.uid)
             .set(user);
           const List = {};
-          db.collection("users")
-            .doc(userData.uid)
-            .collection("Lists")
-            .doc("List name")
-            .set(List);
+          db.collection("users").doc(userData.uid);
         }
       })
       .then(() => {
