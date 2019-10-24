@@ -1,17 +1,20 @@
 import React, { Component } from "react";
 import { withNavigationFocus, Keyboard } from "react-navigation";
+import Autocomplete from "react-native-autocomplete-input";
+import { Button, ThemeProvider } from "react-native-elements";
 import {
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
   TextInput,
-  Button,
+  // Button,
   Modal,
   ScrollView,
   FlatList,
   TouchableWithoutFeedback
 } from "react-native";
+
 require("firebase/firestore");
 const firebase = require("firebase");
 firebase.initializeApp({
@@ -37,7 +40,10 @@ class HomeScreen extends Component {
       searchedAdresses: [],
       CompleteData: [],
       ItemPrice: [],
-      ListName: ""
+      ListName: "",
+      favoritesModalStatus: false,
+      favoritesList: [],
+      hideAuto: false
     };
   }
   searchedAdresses = searchedText => {
@@ -186,6 +192,62 @@ class HomeScreen extends Component {
       );
     this.ShowModalFunction(false);
   }
+  // get item name, show edit item modal
+  _ItemModal = pram => {
+    // console.log(this.state.ItemList);
+    this.setState({ Updatedtext: pram.item });
+    this.setState({ EditItem: pram.item });
+    this.ShowModalFunction();
+  };
+  // save item users favorite item list
+  _saveToFavorites = item => {
+    var userId = firebase.auth().currentUser.uid;
+    const ref = firebase
+      .firestore()
+      .collection("users")
+      .doc(userId)
+      .set(
+        {
+          Lists: {
+            Favorites: firebase.firestore.FieldValue.arrayUnion(item)
+          }
+        },
+        { merge: true }
+      );
+  };
+  _getFavoritesList = () => {
+    var userId = firebase.auth().currentUser.uid;
+    var docRef = db.collection("users").doc(userId);
+    docRef
+      .get()
+      .then(function(doc) {
+        if (doc.exists) {
+          usersList = [];
+          user = doc.data();
+          for (var key in user.Lists) {
+            console.log(key);
+            if (key == "Favorites") {
+              user.Lists[key].forEach(item => {
+                usersList.push(item);
+              });
+              break;
+            }
+          }
+        }
+      })
+      .then(() => {
+        this.setState({ favoritesList: usersList });
+      });
+  };
+  _handleListChange = pram => {
+    this.setState({ ItemList: pram });
+  };
+  ShowModalFunction(visible) {
+    this.setState({ ModalVisibleStatus: visible });
+  }
+  ShowFavModal(visible) {
+    this.setState({ favoritesModalStatus: visible });
+  }
   _getPrices = list => {
     // console.log(list);
     list.forEach(item => {
@@ -199,18 +261,6 @@ class HomeScreen extends Component {
     //  estimatedCost.value
     // set state of new list with item: price
   };
-  _ItemModal = pram => {
-    // console.log(this.state.ItemList);
-    this.setState({ Updatedtext: pram.item });
-    this.setState({ EditItem: pram.item });
-    this.ShowModalFunction();
-  };
-  _handleListChange = pram => {
-    this.setState({ ItemList: pram });
-  };
-  ShowModalFunction(visible) {
-    this.setState({ ModalVisibleStatus: visible });
-  }
   PriceItems = items => {
     // console.log(item);
     var xhr = new XMLHttpRequest();
@@ -281,9 +331,8 @@ class HomeScreen extends Component {
         if (user) {
           var userId = firebase.auth().currentUser.uid;
           this.setState({ userId: userId });
-          // console.log("state ");
-          console.log(this.state.ListName);
           this._getList();
+          this._getFavoritesList();
         }
       });
     });
@@ -293,72 +342,95 @@ class HomeScreen extends Component {
   }
   render() {
     return (
-      <ScrollView keyboardShouldPersistTaps="always">
-        <Button
-          onPress={() => {
-            this.props.navigation.navigate(
-              "App",
-              {},
-              this.props.navigation.navigate({ routeName: "ListSelection" })
-            );
-          }}
-          title="Change List"
-          color="#841584"
-          accessibilityLabel="Change List"
-        ></Button>
-        <TextInput
-          style={styles.searchBar}
-          // onChangeText={this.searchedAdresses}
-          onChangeText={text => {
-            this.searchedAdresses(text);
-            this.setState({ text });
-          }}
-          value={this.state.text}
-          clearTextOnFocus={true}
-        />
-        <FlatList
-          data={this.state.searchedAdresses}
-          renderItem={({ item }) => (
-            <View style={styles.item}>
+      <ScrollView style={styles.container} keyboardShouldPersistTaps="always">
+        <ThemeProvider theme={theme}>
+          <Button
+            onPress={() => {
+              this.props.navigation.navigate(
+                "App",
+                {},
+                this.props.navigation.navigate({ routeName: "ListSelection" })
+              );
+            }}
+            title={this.state.ListName}
+            // rightIcon={{ name: "code" }}
+            icon={{
+              name: "keyboard-arrow-down",
+              size: 15,
+              color: "white"
+            }}
+            accessibilityLabel="Change List"
+          />
+        </ThemeProvider>
+        <View style={styles.Search}>
+          <Autocomplete
+            autoCapitalize="none"
+            autoCorrect={false}
+            containerStyle={styles.autocompleteContainer}
+            data={this.state.CompleteData}
+            value={this.state.text}
+            hideResults={this.state.hideAuto}
+            onChangeText={text => {
+              this.setState({ text: text });
+              this.GetAuto(text);
+              this.setState({ hideAuto: false });
+            }}
+            placeholder="Enter"
+            renderItem={({ item, key }) => (
               <Button
                 onPress={() => {
-                  var temp = item;
-                  this.setState({ text: temp });
+                  var temp = item.name;
+                  // this.setState({ text: temp });
+                  this.setState({ hideAuto: true });
+                  this.setState({ text: "" });
                   this._getInput(temp);
                   this._getList();
                 }}
-                title={item}
-                accessibilityLabel={item}
+                key={key}
+                style={styles.onTop}
+                title={item.name}
+                accessibilityLabel={item.name}
               ></Button>
-            </View>
-          )}
-          keyExtractor={item => item}
-        />
-        <Button
-          onPress={() => {
-            this._getInput(this.state.text);
-            this._getList();
-          }}
-          title="Enter"
-          color="#841584"
-          accessibilityLabel="Enter"
-        />
-        <View>
-          {this.state.ItemList.map((item, key) => (
-            <Button
-              onPress={() => this._ItemModal({ item })}
-              title={`${item} ${
-                JSON.stringify(this.state.ItemPrice[key]) !== undefined
-                  ? " - " + this.state.ItemPrice[item]
-                  : ""
-              }`}
-              key={key}
-              style={styles.ListItem}
-            ></Button>
-          ))}
+            )}
+          />
+          <Button
+            onPress={() => {
+              this._getInput(this.state.text);
+              this._getList();
+            }}
+            title="Enter"
+            color="#b2d2dd"
+            accessibilityLabel="Enter"
+            style={styles.searchEnter}
+          />
+        </View>
+        <View style={styles.onbottom}>
+          <Button
+            style={styles.addFavorites}
+            onPress={() => {
+              this._getFavoritesList();
+              this.ShowFavModal(true);
+            }}
+            title="Add from Favorites"
+            accessibilityLabel="Add from Favorites"
+          />
+          <View>
+            {this.state.ItemList.map((item, key) => (
+              <Button
+                onPress={() => this._ItemModal({ item })}
+                title={`${item} ${
+                  JSON.stringify(this.state.ItemPrice[key]) !== undefined
+                    ? " - " + this.state.ItemPrice[item]
+                    : ""
+                }`}
+                key={key}
+                style={styles.ListItem}
+              ></Button>
+            ))}
+          </View>
         </View>
         <Modal
-          transparent={false}
+          transparent={true}
           animationType={"slide"}
           visible={this.state.ModalVisibleStatus}
           onRequestClose={() => {
@@ -366,6 +438,7 @@ class HomeScreen extends Component {
           }}
         >
           <ScrollView
+            style={styles.itemModal}
             keyboardShouldPersistTaps="always"
             // style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
           >
@@ -377,6 +450,15 @@ class HomeScreen extends Component {
                 clearTextOnFocus={false}
                 // returnKeyType="go"
               />
+              <Button
+                onPress={() => {
+                  this._saveToFavorites(this.state.EditItem);
+                }}
+                title="Add to Favorites"
+                style={styles.ListItem}
+              >
+                Add to Favorites
+              </Button>
               <Button
                 onPress={() => {
                   this._editItem(this.state.EditItem, this.state.Updatedtext);
@@ -408,6 +490,41 @@ class HomeScreen extends Component {
             </View>
           </ScrollView>
         </Modal>
+        <Modal
+          transparent={false}
+          animationType={"slide"}
+          visible={this.state.favoritesModalStatus}
+          onRequestClose={() => {
+            this.ShowFavModal(!this.state.favoritesModalStatus);
+          }}
+        >
+          <Button
+            title="Back"
+            onPress={() => {
+              this.ShowFavModal(false);
+            }}
+          />
+          <FlatList
+            data={this.state.favoritesList}
+            renderItem={({ item }) => (
+              <View style={styles.item}>
+                <Button
+                  onPress={() => {
+                    // var temp = item;
+                    // console.log(temp + " Added");
+                    this._getInput(item);
+                    // this.setState({ text: temp });
+                    // this._getInput(temp);
+                    // this._getList();
+                  }}
+                  title={item}
+                  accessibilityLabel={item}
+                ></Button>
+              </View>
+            )}
+            keyExtractor={item => item}
+          />
+        </Modal>
       </ScrollView>
     );
   }
@@ -417,52 +534,96 @@ HomeScreen.navigationOptions = {
   header: null
 };
 
+const theme = {
+  Button: {
+    buttonStyle: {
+      width: 200,
+      alignSelf: "center",
+      // backgroundColor: ""
+      backgroundColor: "#132640"
+    }
+  }
+};
+
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "#fff"
-  },
-  searchBar: {
+    paddingTop: 20,
     // flex: 1,
-    width: "80%",
-    // marginLeft: 20,
-    padding: 15,
-    borderRadius: 4,
-    borderWidth: 0.5,
-    borderColor: "#d6d7da",
-    backgroundColor: "#fff",
+    backgroundColor: "#132640"
+  },
+  Search: {
+    display: "flex",
+    flexDirection: "row",
     alignSelf: "center",
-    marginTop: 50
+    marginLeft: 50,
+    marginRight: 50,
+    marginBottom: 10
+  },
+  autocompleteContainer: {
+    flex: 3,
+    zIndex: 10
+  },
+  searchEnter: {
+    flex: 2,
+    alignSelf: "center"
+    // backgroundColor: "#b2d2dd"
+  },
+  onbottom: {
+    zIndex: -1,
+    marginLeft: 20,
+    marginRight: 20
+  },
+  addFavorites: {
+    marginBottom: 10
   },
   ListItem: {
     width: "90%",
     // marginLeft: 20,
-    padding: 15,
-    borderRadius: 4,
-    borderWidth: 0.5,
+    // padding: 15,
     borderColor: "#d6d7da",
-    backgroundColor: "#fff",
+    backgroundColor: "#132640",
     alignSelf: "center",
-    marginTop: 10
+    marginBottom: 5
   },
-  ModalInsideView: {
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#00BCD4",
-    height: 300,
-    width: "90%",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#fff"
-  },
-
-  TextStyle: {
-    fontSize: 20,
-    marginBottom: 20,
+  itemModal: {
     color: "#fff",
-    padding: 20,
-    textAlign: "center"
+    width: 300,
+    height: 600,
+    backgroundColor: "#132640",
+    alignSelf: "center"
   }
+  // Button: {
+  //   backgroundColor: "#80afc2"
+  // }
+  // searchBar: {
+  //   // flex: 1,
+  //   width: "80%",
+  //   // marginLeft: 20,
+  //   padding: 15,
+  //   borderRadius: 4,
+  //   borderWidth: 0.5,
+  //   borderColor: "#d6d7da",
+  //   backgroundColor: "#fff",
+  //   alignSelf: "center",
+  //   marginTop: 50
+  // },
+  // ModalInsideView: {
+  //   justifyContent: "center",
+  //   alignItems: "center",
+  //   backgroundColor: "#00BCD4",
+  //   height: 300,
+  //   width: "90%",
+  //   borderRadius: 10,
+  //   borderWidth: 1,
+  //   borderColor: "#fff"
+  // },
+  // TextStyle: {
+  //   fontSize: 20,
+  //   marginBottom: 20,
+  //   color: "#fff",
+  //   padding: 20,
+  //   textAlign: "center"
+  // }
 });
 
 export default HomeScreen;

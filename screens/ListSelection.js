@@ -124,7 +124,11 @@ class ListSelection extends Component {
     temp.forEach(item => {
       importedArray.push(item.trim());
     });
-    var ListName = "imported List"
+    // console.log(this.state.text);
+    var ListName = this.state.text;
+    if (this.state.text == "") {
+      var ListName = "imported List";
+    }
     var userId = firebase.auth().currentUser.uid;
     var docRef = db
       .collection("users")
