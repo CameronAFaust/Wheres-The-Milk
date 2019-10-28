@@ -431,99 +431,117 @@ class HomeScreen extends Component {
         </View>
         <Modal
           transparent={true}
-          animationType={"slide"}
+          animationType="none"
           visible={this.state.ModalVisibleStatus}
           onRequestClose={() => {
             this.ShowModalFunction(!this.state.ModalVisibleStatus);
           }}
         >
-          <ScrollView
-            style={styles.itemModal}
-            keyboardShouldPersistTaps="always"
-            // style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          <TouchableOpacity
+            style={styles.modalBack}
+            activeOpacity={0}
+            onPressOut={() => {
+              // this.ShowModalFunction(false);
+              this.ShowModalFunction(false);
+            }}
           >
-            <View style={styles.ModalInsideView}>
-              <TextInput
-                style={styles.searchBar}
-                onChangeText={text => this.setState({ Updatedtext: text })}
-                value={this.state.Updatedtext}
-                clearTextOnFocus={false}
-                // returnKeyType="go"
-              />
-              <Button
-                onPress={() => {
-                  this._saveToFavorites(this.state.EditItem);
-                }}
-                title="Add to Favorites"
-                style={styles.ListItem}
-              >
-                Add to Favorites
-              </Button>
-              <Button
-                onPress={() => {
-                  this._editItem(this.state.EditItem, this.state.Updatedtext);
-                  this._getList();
-                  this.setState({ EditItem: "" });
-                  this.setState({ Updatedtext: "" });
-                }}
-                title="Update"
-                style={styles.ListItem}
-              >
-                Update
-              </Button>
-              <Button
-                onPress={() => {
-                  this._deleteItem(this.state.EditItem);
-                  this._getList();
-                }}
-                title="Delete"
-                style={styles.ListItem}
-              >
-                Delete
-              </Button>
-              <Button
-                title="Click Here To Hide Modal"
-                onPress={() => {
-                  this.ShowModalFunction(false);
-                }}
-              />
-            </View>
-          </ScrollView>
+            <ScrollView
+              style={styles.itemModal}
+              keyboardShouldPersistTaps="always"
+              // style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+            >
+              <View style={styles.ModalInsideView}>
+                <Button
+                  onPress={() => {
+                    this._saveToFavorites(this.state.EditItem);
+                  }}
+                  icon={{
+                    name: "star",
+                    size: 15,
+                    color: "white"
+                  }}
+                  // title="Add item to Favorites"
+                  style={styles.favoriteListItem}
+                />
+                <TextInput
+                  style={styles.searchBar}
+                  onChangeText={text => this.setState({ Updatedtext: text })}
+                  value={this.state.Updatedtext}
+                  clearTextOnFocus={false}
+                  // returnKeyType="go"
+                />
+                <Button
+                  onPress={() => {
+                    this._editItem(this.state.EditItem, this.state.Updatedtext);
+                    this._getList();
+                    this.setState({ EditItem: "" });
+                    this.setState({ Updatedtext: "" });
+                  }}
+                  title="Update"
+                  style={styles.ModalListItem}
+                />
+                <Button
+                  onPress={() => {
+                    this._deleteItem(this.state.EditItem);
+                    this._getList();
+                  }}
+                  title="Delete"
+                  style={styles.ModalListItem}
+                />
+                <Button
+                  title="Close"
+                  onPress={() => {
+                    this.ShowModalFunction(false);
+                  }}
+                />
+              </View>
+            </ScrollView>
+          </TouchableOpacity>
         </Modal>
         <Modal
-          transparent={false}
+          transparent={true}
           animationType={"slide"}
           visible={this.state.favoritesModalStatus}
           onRequestClose={() => {
             this.ShowFavModal(!this.state.favoritesModalStatus);
           }}
         >
-          <Button
-            title="Back"
-            onPress={() => {
-              this.ShowFavModal(false);
+          <TouchableOpacity
+            style={styles.modalBack}
+            activeOpacity={0}
+            onPressOut={() => {
+              // this.ShowModalFunction(false);
+              this.ShowModalFunction(false);
             }}
-          />
-          <FlatList
-            data={this.state.favoritesList}
-            renderItem={({ item }) => (
-              <View style={styles.item}>
-                <Button
-                  onPress={() => {
-                    // var temp = item;
-                    // console.log(temp + " Added");
-                    this._getInput(item);
-                    // this.setState({ text: temp });
-                    // this._getInput(temp);
-                    // this._getList();
-                  }}
-                  title={item}
-                  accessibilityLabel={item}
-                ></Button>
-              </View>
-            )}
-            keyExtractor={item => item}
-          />
+          >
+            <ScrollView
+              style={styles.ModalInsideView}
+              keyboardShouldPersistTaps="always"
+            >
+              <Button
+                title="Back"
+                onPress={() => {
+                  this.ShowFavModal(false);
+                }}
+              />
+              <FlatList
+                data={this.state.favoritesList}
+                renderItem={({ item }) => (
+                  <View style={styles.item}>
+                    <Button
+                      onPress={() => {
+                        this._getInput(item);
+                        // this.ShowFavModal(false);
+                      }}
+                      title={item}
+                      accessibilityLabel={item}
+                    />
+                  </View>
+                )}
+                keyExtractor={item => item}
+              />
+            </ScrollView>
+          </TouchableOpacity>
         </Modal>
       </ScrollView>
     );
@@ -586,44 +604,45 @@ const styles = StyleSheet.create({
     marginBottom: 5
   },
   itemModal: {
-    color: "#fff",
-    width: 300,
-    height: 600,
-    backgroundColor: "#132640",
+    backgroundColor: "rgba(100,100,100, 0.8)"
+  },
+  ModalInsideView: {
+    margin: 15,
+    marginTop: "35%",
+    backgroundColor: "#b2d2dd",
+    height: 300,
+    width: "90%",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#fff",
+    flexDirection: "column"
+  },
+  modalBack: {
+    height: "100%",
+    backgroundColor: "rgba(100,100,100, 0)"
+  },
+  searchBar: {
+    width: "80%",
+    marginBottom: 15,
+    padding: 15,
+    borderRadius: 4,
+    borderWidth: 0.5,
+    borderColor: "#d6d7da",
+    backgroundColor: "#fff",
     alignSelf: "center"
+    // marginTop: 10
+  },
+  ModalListItem: {
+    width: "70%",
+    alignSelf: "center",
+    marginBottom: 5
+  },
+  favoriteListItem: {
+    top: 10,
+    left: 10,
+    width: 40,
+    marginBottom: 15
   }
-  // Button: {
-  //   backgroundColor: "#80afc2"
-  // }
-  // searchBar: {
-  //   // flex: 1,
-  //   width: "80%",
-  //   // marginLeft: 20,
-  //   padding: 15,
-  //   borderRadius: 4,
-  //   borderWidth: 0.5,
-  //   borderColor: "#d6d7da",
-  //   backgroundColor: "#fff",
-  //   alignSelf: "center",
-  //   marginTop: 50
-  // },
-  // ModalInsideView: {
-  //   justifyContent: "center",
-  //   alignItems: "center",
-  //   backgroundColor: "#00BCD4",
-  //   height: 300,
-  //   width: "90%",
-  //   borderRadius: 10,
-  //   borderWidth: 1,
-  //   borderColor: "#fff"
-  // },
-  // TextStyle: {
-  //   fontSize: 20,
-  //   marginBottom: 20,
-  //   color: "#fff",
-  //   padding: 20,
-  //   textAlign: "center"
-  // }
 });
 
 export default HomeScreen;
