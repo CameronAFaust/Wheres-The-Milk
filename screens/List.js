@@ -12,7 +12,8 @@ import {
   Modal,
   ScrollView,
   FlatList,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  SectionList
 } from "react-native";
 
 require("firebase/firestore");
@@ -43,7 +44,8 @@ class HomeScreen extends Component {
       ListName: "",
       favoritesModalStatus: false,
       favoritesList: [],
-      hideAuto: false
+      hideAuto: false,
+      catigoriesList: []
     };
   }
   searchedAdresses = searchedText => {
@@ -116,12 +118,16 @@ class HomeScreen extends Component {
         // this.PriceItems(usersList);
         this.setState({ ListName: ListName });
         this.setState({ ItemList: usersList });
+        this.getCategory();
       });
   };
   // add item to list
   _getInput(item) {
     SelectedList = this.state.ListName;
-    if (!this.state.ItemList.includes(item)) {
+    var regex = new RegExp(this.state.ItemList.join("|"), "i");
+    if (item == "") {
+      alert("Please type in a word");
+    } else if (!regex.test(item)) {
       this.setState({ ItemList: [...this.state.ItemList, item] });
       var userId = firebase.auth().currentUser.uid;
       const ref = firebase
@@ -225,7 +231,7 @@ class HomeScreen extends Component {
           usersList = [];
           user = doc.data();
           for (var key in user.Lists) {
-            console.log(key);
+            // console.log(key);
             if (key == "Favorites") {
               user.Lists[key].forEach(item => {
                 usersList.push(item);
@@ -314,13 +320,45 @@ class HomeScreen extends Component {
 
     xhr.send(data);
   };
+  getCategory = () => {
+    // get list
+    var List = this.state.ItemList;
+    var tempList = [];
+    var CatList = [];
+    var cats = ["Cat1", "Cat2", "test123", "Cat4"];
+    // call api either with one item, or with a list of items
+    // var Link = `https://api.kroger.com/v1/products?filter.term=${item}`;
+
+    // make new list with {items: cat}
+    //temp
+    List.forEach(item => {
+      tempList.push({
+        title: cats[Math.floor(Math.random() * 4)],
+        data: [item]
+      });
+    });
+
+    tempList.forEach(item => {
+      var found = false;
+      for (var i = 0; i < CatList.length; i++) {
+        if (CatList[i].title != undefined && CatList[i].title == item.title) {
+          //found item cat, add to that cat
+          CatList[i].data.push(item.data);
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        CatList.push(item);
+      }
+    });
+    // set each item with its isle number / location
+    this.setState({ catigoriesList: CatList });
+  };
   componentDidMount() {
     const { navigation } = this.props;
     let ListName = this.props.navigation.getParam("name", "List 1");
-    // console.log("props ");
-    // console.log(ListName);
     if (ListName.item != undefined) {
-      // console.log(ListName.item)
       ListName = ListName.item;
     }
     this.setState({
@@ -342,7 +380,7 @@ class HomeScreen extends Component {
   }
   render() {
     return (
-      <ScrollView style={styles.container} keyboardShouldPersistTaps="always">
+      <View style={styles.container} keyboardShouldPersistTaps="always">
         <ThemeProvider theme={theme}>
           <Button
             onPress={() => {
@@ -376,6 +414,7 @@ class HomeScreen extends Component {
               this.setState({ hideAuto: false });
             }}
             placeholder="Enter"
+            keyExtractor={(item, key) => item.name.toString()}
             renderItem={({ item, key }) => (
               <Button
                 onPress={() => {
@@ -386,11 +425,10 @@ class HomeScreen extends Component {
                   this._getInput(temp);
                   this._getList();
                 }}
-                key={key}
                 style={styles.onTop}
                 title={item.name}
                 accessibilityLabel={item.name}
-              ></Button>
+              />
             )}
           />
           <Button
@@ -404,7 +442,7 @@ class HomeScreen extends Component {
             style={styles.searchEnter}
           />
         </View>
-        <View style={styles.onbottom}>
+        <ScrollView style={styles.onbottom}>
           <Button
             style={styles.addFavorites}
             onPress={() => {
@@ -414,7 +452,21 @@ class HomeScreen extends Component {
             title="Add from Favorites"
             accessibilityLabel="Add from Favorites"
           />
-          <View>
+          <SectionList
+            sections={this.state.catigoriesList}
+            renderItem={({ item }) => (
+              <Button
+                onPress={() => this._ItemModal({ item })}
+                title={`${item}`}
+                style={styles.ListItem}
+              />
+            )}
+            renderSectionHeader={({ section }) => (
+              <Text style={styles.sectionHeader}>{section.title}</Text>
+            )}
+            keyExtractor={title => title}
+          />
+          {/* <View>
             {this.state.ItemList.map((item, key) => (
               <Button
                 onPress={() => this._ItemModal({ item })}
@@ -425,10 +477,11 @@ class HomeScreen extends Component {
                 }`}
                 key={key}
                 style={styles.ListItem}
-              ></Button>
+              />
             ))}
-          </View>
-        </View>
+          </View> */}
+        </ScrollView>
+        {/* Item Modal */}
         <Modal
           transparent={true}
           animationType="none"
@@ -445,62 +498,64 @@ class HomeScreen extends Component {
               this.ShowModalFunction(false);
             }}
           >
-            <ScrollView
-              style={styles.itemModal}
-              keyboardShouldPersistTaps="always"
-              // style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-            >
-              <View style={styles.ModalInsideView}>
-                <Button
-                  onPress={() => {
-                    this._saveToFavorites(this.state.EditItem);
-                  }}
-                  icon={{
-                    name: "star",
-                    size: 15,
-                    color: "white"
-                  }}
-                  // title="Add item to Favorites"
-                  style={styles.favoriteListItem}
-                />
-                <TextInput
-                  style={styles.searchBar}
-                  onChangeText={text => this.setState({ Updatedtext: text })}
-                  value={this.state.Updatedtext}
-                  clearTextOnFocus={false}
-                  // returnKeyType="go"
-                />
-                <Button
-                  onPress={() => {
-                    this._editItem(this.state.EditItem, this.state.Updatedtext);
-                    this._getList();
-                    this.setState({ EditItem: "" });
-                    this.setState({ Updatedtext: "" });
-                  }}
-                  title="Update"
-                  style={styles.ModalListItem}
-                />
-                <Button
-                  onPress={() => {
-                    this._deleteItem(this.state.EditItem);
-                    this._getList();
-                  }}
-                  title="Delete"
-                  style={styles.ModalListItem}
-                />
-                <Button
-                  title="Close"
-                  onPress={() => {
-                    this.ShowModalFunction(false);
-                  }}
-                />
-              </View>
-            </ScrollView>
+            <View style={styles.itemModal} keyboardShouldPersistTaps="always">
+              <TouchableWithoutFeedback>
+                <View style={styles.ModalInsideView}>
+                  <Button
+                    onPress={() => {
+                      this._saveToFavorites(this.state.EditItem);
+                    }}
+                    icon={{
+                      name: "star",
+                      size: 15,
+                      color: "white"
+                    }}
+                    // title="Add item to Favorites"
+                    style={styles.favoriteListItem}
+                  />
+                  <TextInput
+                    style={styles.searchBar}
+                    onChangeText={text => this.setState({ Updatedtext: text })}
+                    value={this.state.Updatedtext}
+                    clearTextOnFocus={false}
+                    // returnKeyType="go"
+                  />
+                  <Button
+                    onPress={() => {
+                      this._editItem(
+                        this.state.EditItem,
+                        this.state.Updatedtext
+                      );
+                      this._getList();
+                      this.setState({ EditItem: "" });
+                      this.setState({ Updatedtext: "" });
+                    }}
+                    title="Update"
+                    style={styles.ModalListItem}
+                  />
+                  <Button
+                    onPress={() => {
+                      this._deleteItem(this.state.EditItem);
+                      this._getList();
+                    }}
+                    title="Delete"
+                    style={styles.ModalListItem}
+                  />
+                  <Button
+                    title="Close"
+                    onPress={() => {
+                      this.ShowModalFunction(false);
+                    }}
+                  />
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
           </TouchableOpacity>
         </Modal>
+        {/* Favorites Modal */}
         <Modal
           transparent={true}
-          animationType={"slide"}
+          animationType={"none"}
           visible={this.state.favoritesModalStatus}
           onRequestClose={() => {
             this.ShowFavModal(!this.state.favoritesModalStatus);
@@ -511,39 +566,42 @@ class HomeScreen extends Component {
             activeOpacity={0}
             onPressOut={() => {
               // this.ShowModalFunction(false);
-              this.ShowModalFunction(false);
+              this.ShowFavModal(false);
             }}
           >
-            <ScrollView
-              style={styles.ModalInsideView}
-              keyboardShouldPersistTaps="always"
-            >
-              <Button
-                title="Back"
-                onPress={() => {
-                  this.ShowFavModal(false);
-                }}
-              />
-              <FlatList
-                data={this.state.favoritesList}
-                renderItem={({ item }) => (
-                  <View style={styles.item}>
-                    <Button
-                      onPress={() => {
-                        this._getInput(item);
-                        // this.ShowFavModal(false);
-                      }}
-                      title={item}
-                      accessibilityLabel={item}
-                    />
-                  </View>
-                )}
-                keyExtractor={item => item}
-              />
-            </ScrollView>
+            <View style={styles.itemModal} keyboardShouldPersistTaps="always">
+              <TouchableWithoutFeedback>
+                <View style={styles.ModalInsideView}>
+                  <Button
+                    style={styles.backButton}
+                    title="Back"
+                    onPress={() => {
+                      this.ShowFavModal(false);
+                    }}
+                  />
+                  <Text style={styles.FavoritesText}>Favorites</Text>
+                  <FlatList
+                    data={this.state.favoritesList}
+                    renderItem={({ item }) => (
+                      <View style={styles.ModalListItem}>
+                        <Button
+                          onPress={() => {
+                            this._getInput(item);
+                            // this.ShowFavModal(false);
+                          }}
+                          title={item}
+                          accessibilityLabel={item}
+                        />
+                      </View>
+                    )}
+                    keyExtractor={item => item}
+                  />
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
           </TouchableOpacity>
         </Modal>
-      </ScrollView>
+      </View>
     );
   }
 }
@@ -567,6 +625,7 @@ const styles = StyleSheet.create({
   container: {
     paddingTop: 20,
     // flex: 1,
+    height: "100%",
     backgroundColor: "#132640"
   },
   Search: {
@@ -619,7 +678,7 @@ const styles = StyleSheet.create({
   },
   modalBack: {
     height: "100%",
-    backgroundColor: "rgba(100,100,100, 0)"
+    backgroundColor: "rgba(100,100,100, 0.8)"
   },
   searchBar: {
     width: "80%",
@@ -642,6 +701,26 @@ const styles = StyleSheet.create({
     left: 10,
     width: 40,
     marginBottom: 15
+  },
+  backButton: {
+    width: "20%",
+    margin: 5,
+    marginBottom: 10
+  },
+  FavoritesText: {
+    alignSelf: "center",
+    fontSize: 20,
+    marginBottom: 10
+  },
+  sectionHeader: {
+    paddingTop: 2,
+    paddingLeft: 10,
+    paddingRight: 10,
+    paddingBottom: 2,
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: 10,
+    backgroundColor: "rgba(247,247,247,1.0)"
   }
 });
 

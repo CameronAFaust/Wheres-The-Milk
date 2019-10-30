@@ -1,14 +1,16 @@
 import React, { Component } from "react";
 // import { withNavigationFocus, Keyboard } from "react-navigation";
+import { Button, ThemeProvider } from "react-native-elements";
 import {
   StyleSheet,
   Text,
   ScrollView,
-  Button,
+  TouchableWithoutFeedback,
   View,
   Modal,
   TextInput,
-  Clipboard
+  Clipboard,
+  TouchableOpacity
 } from "react-native";
 require("firebase/firestore");
 const firestore = require("firebase/firestore");
@@ -146,8 +148,11 @@ class ListSelection extends Component {
 
   render() {
     return (
-      <View>
-        <ScrollView keyboardShouldPersistTaps="always">
+      <View style={styles.container}>
+        <ScrollView
+          keyboardShouldPersistTaps="always"
+          style={styles.ScrollStyle}
+        >
           <Button
             onPress={() => {
               this.props.navigation.navigate(
@@ -157,100 +162,141 @@ class ListSelection extends Component {
               );
             }}
             title="Back"
-            color="#841584"
             accessibilityLabel="Back to List"
           />
+          <Text style={styles.ListText}>Select List</Text>
           {this.state.Lists.map((item, key) => (
             <Button
-              // onPress={() => this._changeClick({ item })}
+              style={styles.listStyle}
               onPress={() => {
                 this.setState({ editList: item });
                 this.ShowEditListModal(true);
               }}
               title={item}
               key={key}
-              //   style={styles.ListItem}
             />
           ))}
         </ScrollView>
         <Button
           onPress={() => this.ShowNewListModal(true)}
           title="Create new List"
-        ></Button>
+          style={styles.newListStyle}
+        />
         {/* Edit List Modal */}
         <Modal
-          transparent={false}
-          animationType={"slide"}
+          transparent={true}
+          animationType={"none"}
           visible={this.state.editListModal}
           onRequestClose={() => {
             this.ShowEditListModal(!this.state.editListModal);
           }}
         >
-          <Text>{this.state.editList}</Text>
-          <Button
-            onPress={() => {
-              // this.ShowEditListModal(false);
-              this.getList();
-            }}
-            title="Copy List"
-            color="#841584"
-            accessibilityLabel="Copy List"
-          />
-          <Button
-            onPress={() => {
+          <TouchableOpacity
+            style={styles.modalBack}
+            activeOpacity={0}
+            onPressOut={() => {
+              // this.ShowModalFunction(false);
               this.ShowEditListModal(false);
             }}
-            title="Cancel"
-            color="#841584"
-            accessibilityLabel="Enter"
-          />
+          >
+            <View style={styles.itemModal} keyboardShouldPersistTaps="always">
+              <TouchableWithoutFeedback>
+                <View style={styles.ModalInsideView}>
+                  <Text style={styles.TextStyle}>{this.state.editList}</Text>
+                  <Button
+                    style={styles.EditButtons}
+                    onPress={() => {
+                      this._changeClick(this.state.editList);
+                    }}
+                    title="Select List"
+                    // color="#841584"
+                    accessibilityLabel="Select List"
+                  />
+                  <Button
+                    style={styles.EditButtons}
+                    onPress={() => {
+                      // this.ShowEditListModal(false);
+                      this.getList();
+                    }}
+                    title="Copy List"
+                    // color="#841584"
+                    accessibilityLabel="Copy List"
+                  />
+                  <Button
+                    style={styles.EditButtons}
+                    onPress={() => {
+                      this.ShowEditListModal(false);
+                    }}
+                    title="Cancel"
+                    // color="#841584"
+                    accessibilityLabel="Enter"
+                  />
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableOpacity>
         </Modal>
         {/* New List Modal */}
         <Modal
-          transparent={false}
-          animationType={"slide"}
+          transparent={true}
+          animationType={"none"}
           visible={this.state.NewListModal}
           onRequestClose={() => {
             this.ShowNewListModal(!this.state.NewListModal);
           }}
         >
-          <TextInput
-            style={styles.searchBar}
-            onChangeText={text => {
-              this.setState({ text });
-            }}
-            value={this.state.text}
-            clearTextOnFocus={true}
-          />
-          <Button
-            onPress={() => {
-              this.readFromClipboard();
-              // console.log(this.state.clipboardContent)
-              // this.setState({ clipboardContent });
-              // this.ShowNewListModal(false);
-              // this._newList(this.state.text);
-            }}
-            title="Import List from clipboard"
-            color="#841584"
-            accessibilityLabel="Import List from clipboard"
-          />
-          <Button
-            onPress={() => {
-              this.ShowNewListModal(false);
-              this._newList(this.state.text);
-            }}
-            title="Enter"
-            color="#841584"
-            accessibilityLabel="Enter"
-          />
-          <Button
-            onPress={() => {
+          <TouchableOpacity
+            style={styles.modalBack}
+            activeOpacity={0}
+            onPressOut={() => {
               this.ShowNewListModal(false);
             }}
-            title="Cancel"
-            color="#841584"
-            accessibilityLabel="Enter"
-          />
+          >
+            <View style={styles.itemModal} keyboardShouldPersistTaps="always">
+              <TouchableWithoutFeedback>
+                <View style={styles.ModalInsideView}>
+                  <TextInput
+                    placeholder="Name of new list"
+                    style={styles.searchBar}
+                    placeholderTextColor = "#000"
+                    onChangeText={text => {
+                      this.setState({ text });
+                    }}
+                    value={this.state.text}
+                    clearTextOnFocus={true}
+                  />
+                  <Button
+                    style={styles.EditButtons}
+                    onPress={() => {
+                      this.readFromClipboard();
+                    }}
+                    title="Import List from clipboard"
+                    // color="#841584"
+                    accessibilityLabel="Import List from clipboard"
+                  />
+                  <Button
+                    style={styles.EditButtons}
+                    onPress={() => {
+                      this.ShowNewListModal(false);
+                      this._newList(this.state.text);
+                    }}
+                    title="Enter"
+                    // color="#841584"
+                    accessibilityLabel="Enter"
+                  />
+                  <Button
+                    style={styles.EditButtons}
+                    onPress={() => {
+                      this.ShowNewListModal(false);
+                    }}
+                    title="Cancel"
+                    // color="#841584"
+                    accessibilityLabel="Enter"
+                  />
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableOpacity>
         </Modal>
       </View>
     );
@@ -262,17 +308,74 @@ ListSelection.navigationOptions = {
 };
 
 const styles = StyleSheet.create({
+  container: {
+    paddingTop: 20,
+    backgroundColor: "#132640",
+    color: "#f0f"
+  },
   searchBar: {
-    // flex: 1,
     width: "80%",
-    // marginLeft: 20,
     padding: 15,
     borderRadius: 4,
     borderWidth: 0.5,
     borderColor: "#d6d7da",
     backgroundColor: "#fff",
     alignSelf: "center",
-    marginTop: 50
+    margin: 15,
+  },
+  ScrollStyle: {
+    height: "100%",
+    width: "100%",
+    flexDirection: "column"
+  },
+  listStyle: {
+    color: "#fff",
+    width: "80%",
+    alignSelf: "center",
+    margin: 5
+  },
+  ListText: {
+    alignSelf: "center",
+    fontSize: 20,
+    marginBottom: 10,
+    color: "#fff",
+    marginTop: 10
+  },
+  newListStyle: {
+    position: "absolute",
+    bottom: 10,
+    width: "90%",
+    alignSelf: "center"
+  },
+  ModalInsideView: {
+    margin: 15,
+    marginTop: "35%",
+    backgroundColor: "#b2d2dd",
+    height: 300,
+    width: "90%",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#fff",
+    flexDirection: "column"
+  },
+  itemModal: {
+    height: "100%",
+    backgroundColor: "rgba(100,100,100, 0.8)"
+  },
+  TextStyle: {
+    alignSelf: "center",
+    fontSize: 20,
+    // marginBottom: 10,
+    margin: 10
+  },
+  EditButtons: {
+    width: "90%",
+    // marginLeft: 20,
+    // padding: 15,
+    borderColor: "#d6d7da",
+    backgroundColor: "#132640",
+    alignSelf: "center",
+    marginBottom: 5
   }
 });
 
