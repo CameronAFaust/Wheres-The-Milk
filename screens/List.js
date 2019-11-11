@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   View,
   TextInput,
-  // Button,
   Modal,
   ScrollView,
   FlatList,
@@ -31,21 +30,22 @@ class HomeScreen extends Component {
     super(props);
     this.state = {
       text: "",
-      ItemList: [],
-      ItemListPrices: [],
       userid: "",
-      ModalVisibleStatus: false,
       EditItem: "",
       Updatedtext: "",
       SelectedList: "",
+      ListName: "",
+      access_token: "",
+      totalPrice: "",
+      ModalVisibleStatus: false,
+      hideAuto: false,
+      favoritesModalStatus: false,
+      ItemList: [],
       searchedAdresses: [],
       CompleteData: [],
-      ItemPrice: [],
-      ListName: "",
-      favoritesModalStatus: false,
       favoritesList: [],
-      hideAuto: false,
-      catigoriesList: []
+      catigoriesList: [],
+      ItemData: []
     };
   }
   searchedAdresses = searchedText => {
@@ -62,7 +62,6 @@ class HomeScreen extends Component {
       searchedAdresses.push(item.name);
     });
     this.setState({ searchedAdresses: searchedAdresses });
-    // console.log(searchedAdresses);
   };
   GetAuto = input => {
     var data = null;
@@ -111,14 +110,17 @@ class HomeScreen extends Component {
           }
         }
       })
-      .catch(function(error) {
-        console.log("Error getting document:", error);
-      })
+      .catch(function(error) {})
       .then(() => {
-        // this.PriceItems(usersList);
+        this.setState({ ItemData: [] });
         this.setState({ ListName: ListName });
         this.setState({ ItemList: usersList });
-        this.getCategory();
+        // this.getCategory();
+      })
+      .then(() => {
+        usersList.forEach(item => {
+          this.getItemData(item, "70600094");
+        });
       });
   };
   // add item to list
@@ -148,6 +150,10 @@ class HomeScreen extends Component {
   }
   //get original item and edit it to new item
   _editItem(original, Edited) {
+    var index = this.state.catigoriesList.indexOf(original);
+    if (index > -1) {
+      this.state.catigoriesList.splice(index, 1);
+    }
     SelectedList = this.state.ListName;
     if (firebase.auth().currentUser != null) {
       var userId = firebase.auth().currentUser.uid;
@@ -181,8 +187,10 @@ class HomeScreen extends Component {
   }
   //remove item
   _deleteItem(item) {
-    // const update = {};
-    // update[`${item}`] = firebase.firestore.FieldValue.delete();
+    var index = this.state.catigoriesList.indexOf(item);
+    if (index > -1) {
+      this.state.catigoriesList.splice(index, 1);
+    }
     SelectedList = this.state.ListName;
     var userId = firebase.auth().currentUser.uid;
     var docRef = db
@@ -200,9 +208,9 @@ class HomeScreen extends Component {
   }
   // get item name, show edit item modal
   _ItemModal = pram => {
-    // console.log(this.state.ItemList);
-    this.setState({ Updatedtext: pram.item });
-    this.setState({ EditItem: pram.item });
+    var itemArray = pram.item.split("-")[0];
+    this.setState({ Updatedtext: itemArray });
+    this.setState({ EditItem: itemArray });
     this.ShowModalFunction();
   };
   // save item users favorite item list
@@ -231,7 +239,6 @@ class HomeScreen extends Component {
           usersList = [];
           user = doc.data();
           for (var key in user.Lists) {
-            // console.log(key);
             if (key == "Favorites") {
               user.Lists[key].forEach(item => {
                 usersList.push(item);
@@ -254,108 +261,146 @@ class HomeScreen extends Component {
   ShowFavModal(visible) {
     this.setState({ favoritesModalStatus: visible });
   }
-  _getPrices = list => {
-    // console.log(list);
-    list.forEach(item => {
-      // loadData();
-    });
-    //  for each item in list
-    //  `https://api.spoonacular.com/food/products/search?query=${item}`
-    //  if none return null, or nothing else:
-    //  get id of item
-    // `https://api.spoonacular.com/food/products/${id}?apiKey=5565c2ccd2f1482e830f5b68bef337de`
-    //  estimatedCost.value
-    // set state of new list with item: price
+  getCategory = () => {
+    // get list
+    var List = this.state.ItemData;
+    var total = 0;
+    var CatList = [
+      {
+        title: "Loading",
+        data: ["Loading"]
+      }
+    ];
+    if (List.length == this.state.ItemList.length) {
+      CatList = [];
+      List.forEach(item => {
+        var found = false;
+        for (var i = 0; i < CatList.length; i++) {
+          var name = item.name;
+          if (item.cost != "") {
+            name = item.name + " - $" + item.cost;
+            total += item.cost;
+          }
+          if (
+            CatList[i].title != undefined &&
+            CatList[i].title == item.category
+          ) {
+            //found item cat, add to that cat
+            CatList[i].data.push(name);
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          CatList.push({
+            title: item.category,
+            data: [name]
+          });
+        }
+      });
+      // set each item with its isle number / location
+      this.setState({ totalPrice: total });
+    }
+    this.setState({ catigoriesList: CatList });
   };
-  PriceItems = items => {
-    // console.log(item);
+  // use this instead of go through all of them, ??
+  addCategry = () => {
+    var found = false;
+    for (var i = 0; i < CatList.length; i++) {
+      if (CatList[i].title != undefined && CatList[i].title == item.category) {
+        //found item cat, add to that cat
+        CatList[i].data.push(item.name);
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      CatList.push({ title: item.category, data: [item.name] });
+    }
+  };
+  // save id to state to be used by other functions (needs to be called)
+  getCreds = () => {
+    data = "grant_type=client_credentials&scope=product.compact";
+
     var xhr = new XMLHttpRequest();
-
-    var ingredientList = "";
-    items.forEach(item => {
-      ingredientList += encodeURIComponent(item.trim()) + "\n";
-    });
-    var data = `ingredientList=${ingredientList}&servings=6`;
-    // console.log(data);
-
     xhr.withCredentials = true;
 
     xhr.onload = loadComplete = () => {
-      var response = JSON.parse(xhr.responseText);
-      response.forEach(item => {
-        var obj = {};
-        var key = JSON.stringify(item.originalName);
-        if (item.estimatedCost !== undefined) {
-          key = key.substring(1, key.length - 1);
-          obj[key] = JSON.stringify(item.estimatedCost.value) / 100;
-          this.state.ItemPrice.push(obj);
-          // this.state.ItemPrice.push(
-          //   JSON.stringify(item.estimatedCost.value) / 100
-          // );
-        } else {
-          key = key.substring(1, key.length - 1);
-          obj[key] = " ";
-          this.state.ItemPrice.push(obj);
-        }
-      });
-      // console.log(this.state.ItemPrice[0]);
-      // console.log(JSON.stringify(this.state.ItemPrice)["tuna"]);
-      this.setState({ state: this.state });
-      // return JSON.parse(xhr.responseText);
+      if (xhr.readyState === 4) {
+        this.setState({
+          access_token: JSON.parse(xhr.responseText).access_token
+        });
+      }
     };
 
-    xhr.open(
-      "POST",
-      "https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/recipes/parseIngredients"
-    );
+    xhr.open("POST", "https://api.kroger.com/v1/connect/oauth2/token");
     xhr.setRequestHeader(
-      "x-rapidapi-host",
-      "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com"
+      "Authorization",
+      "Basic d2hlcmVzLXRoZS1taWxrLWViYTFjMWI1ZTUzOGZlNjlmN2Y0ODM2ZmRjZmQzNWUzOnFYdWttS0ZWUzhTZFp3TG5RN3FEQ3p1TGNLTWdvcmc3"
     );
-    xhr.setRequestHeader(
-      "x-rapidapi-key",
-      "22565bcaa7msh7b316a0ef99472ap164e6cjsn2841a03ec9cd"
-    );
-    xhr.setRequestHeader("content-type", "application/x-www-form-urlencoded");
+    xhr.setRequestHeader("Accept", "*/*");
+    xhr.setRequestHeader("Cache-Control", "no-cache");
+    xhr.setRequestHeader("Host", "api.kroger.com");
+    xhr.setRequestHeader("Accept-Encoding", "gzip, deflate");
+    xhr.setRequestHeader("Connection", "keep-alive");
+    xhr.setRequestHeader("cache-control", "no-cache");
 
     xhr.send(data);
   };
-  getCategory = () => {
-    // get list
-    var List = this.state.ItemList;
-    var tempList = [];
-    var CatList = [];
-    var cats = ["Cat1", "Cat2", "test123", "Cat4"];
-    // call api either with one item, or with a list of items
-    // var Link = `https://api.kroger.com/v1/products?filter.term=${item}`;
+  // done? if .push to state works (needs to be called)
+  getItemData = (item, locationId) => {
+    var xhr = new XMLHttpRequest();
+    xhr.withCredentials = true;
 
-    // make new list with {items: cat}
-    //temp
-    List.forEach(item => {
-      tempList.push({
-        title: cats[Math.floor(Math.random() * 4)],
-        data: [item]
-      });
-    });
-
-    tempList.forEach(item => {
-      var found = false;
-      for (var i = 0; i < CatList.length; i++) {
-        if (CatList[i].title != undefined && CatList[i].title == item.title) {
-          //found item cat, add to that cat
-          CatList[i].data.push(item.data);
-          found = true;
-          break;
+    xhr.onload = loadComplete = () => {
+      if (xhr.readyState === 4) {
+        if (
+          typeof JSON.parse(xhr.responseText).data[0].categories[0] ==
+          "undifined"
+        ) {
+          //add to list of items with no isle
+          this.state.ItemData.push({
+            name: item,
+            category: "none",
+            cost: JSON.parse(xhr.responseText).data[0].items[0].price.regular
+          });
+        } else if (
+          typeof JSON.parse(xhr.responseText).data[0].items[0].price ==
+          "undefined"
+        ) {
+          //push [name: item, isleNumber: number, cost: price]
+          this.state.ItemData.push({
+            name: item,
+            category: JSON.parse(xhr.responseText).data[0].categories[0],
+            cost: ""
+          });
+        } else {
+          this.state.ItemData.push({
+            name: item,
+            category: JSON.parse(xhr.responseText).data[0].categories[0],
+            cost: JSON.parse(xhr.responseText).data[0].items[0].price.regular
+          });
         }
       }
-      if (!found) {
-        CatList.push(item);
-      }
-    });
-    // set each item with its isle number / location
-    this.setState({ catigoriesList: CatList });
+      this.getCategory();
+    };
+
+    xhr.open(
+      "GET",
+      `https://api.kroger.com/v1/products?filter.term=${item}&filter.locationId=${locationId}&filter.limit=1`
+    );
+    xhr.setRequestHeader("Authorization", `Bearer ${this.state.access_token}`);
+    xhr.setRequestHeader("Accept", "*/*");
+    xhr.setRequestHeader("Cache-Control", "no-cache");
+    xhr.setRequestHeader("Host", "api.kroger.com");
+    xhr.setRequestHeader("Accept-Encoding", "gzip, deflate");
+    xhr.setRequestHeader("Connection", "keep-alive");
+    xhr.setRequestHeader("cache-control", "no-cache");
+
+    xhr.send();
   };
   componentDidMount() {
+    this.getCreds();
     const { navigation } = this.props;
     let ListName = this.props.navigation.getParam("name", "List 1");
     if (ListName.item != undefined) {
@@ -371,6 +416,7 @@ class HomeScreen extends Component {
           this.setState({ userId: userId });
           this._getList();
           this._getFavoritesList();
+          this.getCategory();
         }
       });
     });
@@ -466,21 +512,12 @@ class HomeScreen extends Component {
             )}
             keyExtractor={title => title}
           />
-          {/* <View>
-            {this.state.ItemList.map((item, key) => (
-              <Button
-                onPress={() => this._ItemModal({ item })}
-                title={`${item} ${
-                  JSON.stringify(this.state.ItemPrice[key]) !== undefined
-                    ? " - " + this.state.ItemPrice[item]
-                    : ""
-                }`}
-                key={key}
-                style={styles.ListItem}
-              />
-            ))}
-          </View> */}
         </ScrollView>
+        <View style={styles.totalPriceView}>
+          <Text style={styles.totalPriceText}>
+            Total: ${parseFloat(this.state.totalPrice).toFixed(2)}
+          </Text>
+        </View>
         {/* Item Modal */}
         <Modal
           transparent={true}
@@ -721,6 +758,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
     backgroundColor: "rgba(247,247,247,1.0)"
+  },
+  totalPriceView: {
+    justifyContent: "flex-end",
+    margin: 5
+  },
+  totalPriceText: {
+    fontSize: 18,
+    color: "#FFF"
   }
 });
 

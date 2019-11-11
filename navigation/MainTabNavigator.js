@@ -37,7 +37,7 @@ HomeStack.path = "";
 
 const MapStack = createStackNavigator(
   {
-    Map: HomeScreen
+    Map: mapScreen
   },
   config
 );
