@@ -187,10 +187,6 @@ class HomeScreen extends Component {
   }
   //remove item
   _deleteItem(item) {
-    var index = this.state.catigoriesList.indexOf(item);
-    if (index > -1) {
-      this.state.catigoriesList.splice(index, 1);
-    }
     SelectedList = this.state.ListName;
     var userId = firebase.auth().currentUser.uid;
     var docRef = db
@@ -204,11 +200,15 @@ class HomeScreen extends Component {
         },
         { merge: true }
       );
+    var index = this.state.ItemList.indexOf(item);
+    if (index > -1) {
+      this.state.ItemList.splice(index, 1);
+    }
     this.ShowModalFunction(false);
   }
   // get item name, show edit item modal
   _ItemModal = pram => {
-    var itemArray = pram.item.split("-")[0];
+    var itemArray = pram.item.split("-")[0].trim();
     this.setState({ Updatedtext: itemArray });
     this.setState({ EditItem: itemArray });
     this.ShowModalFunction();
@@ -275,12 +275,12 @@ class HomeScreen extends Component {
       CatList = [];
       List.forEach(item => {
         var found = false;
+        var name = item.name;
+        if (item.cost != "") {
+          name = item.name + " - $" + item.cost;
+          total += item.cost;
+        }
         for (var i = 0; i < CatList.length; i++) {
-          var name = item.name;
-          if (item.cost != "") {
-            name = item.name + " - $" + item.cost;
-            total += item.cost;
-          }
           if (
             CatList[i].title != undefined &&
             CatList[i].title == item.category

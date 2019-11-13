@@ -1,5 +1,15 @@
 import React, { Component } from "react";
-import { StyleSheet, View, Image } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Image,
+  TextInput,
+  ScrollView,
+  ListView,
+  Modal,
+  Button,
+  Text
+} from "react-native";
 import Canvas, { Image as CanvasImage } from "react-native-canvas";
 
 class MapScreen extends Component {
@@ -9,9 +19,15 @@ class MapScreen extends Component {
       imgID:
         "http://www.economicmodeling.com/wp-content/uploads/temp-sticker.jpg",
       storeDetails: [],
-      imgdata: ""
+      imgdata: "",
+      AuthToken: "",
+      LocationModal: true,
+      userZipCode: 0
+      // userLat: "",
+      // userLong: ""
     };
   }
+  // Change to getCreds/ AuthToken
   handleCanvas = () => {
     canvas = this.refs.canvas;
     const image = new CanvasImage(canvas);
@@ -102,7 +118,45 @@ class MapScreen extends Component {
 
     xhr.send(data);
   };
-  getLocation = (lat, long) => {
+  getZipcode = zipCode => {
+    var xhr = new XMLHttpRequest();
+    xhr.withCredentials = true;
+
+    xhr.addEventListener("readystatechange", function() {
+      if (this.readyState === 4) {
+        console.log(this.responseText);
+      }
+    });
+
+    xhr.open(
+      "GET",
+      "https://api.kroger.com/v1/locations?filter.zipCode.near=%3Cstring%3E&filter.radiusInMiles=10&filter.limit=10&filter.chain=SMITHS"
+    );
+    xhr.setRequestHeader(
+      "Authorization",
+      "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ilo0RmQzbXNrSUg4OGlydDdMQjVjNmc9PSIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6InByb2R1Y3QuY29tcGFjdCIsImF1dGhBdCI6MTU3MzE1MDA2MjY2NTY4NjM3MCwiYXVkIjoid2hlcmVzLXRoZS1taWxrLWViYTFjMWI1ZTUzOGZlNjlmN2Y0ODM2ZmRjZmQzNWUzIiwiZXhwIjoxNTczMTUxODYyLCJpYXQiOjE1NzMxNTAwNTcsImlzcyI6ImFwaS5rcm9nZXIuY29tIiwic3ViIjoiODAxYzY2ZDAtY2UzNS00MjY5LTgwNDYtZDYzYTI4ZjUzY2QwIn0.o85PLq-DlidFvnzs2GmRaM_ZrRBeVkCBsz8ePk0yui2oaxBvvst2UYnAQnJvZ7XioyDsaKH3Hy3Mx7P-r3TxEIHqBl-DG5xnHBtr2NVSZlzCUkFtYkG5WD53SbS9wM-6jC3tX8VHPnMvcl-wtaY4yrc980vh9cF98vA3i74f7yQM7k6XJVXikHuUABtr7daXgizm5uH2ArcsfMust2jlIY3MrLw-sRaWsutcW9UidEPzfFn-Z3-uKgO7U30vAwohheDVikk43EvSSJzKCb4NUpupLq7bvJbrRjg11Mm_XWtRha_FisxX5lvFEI7aqhOdZD8OOU-kC7mX8QMS940m_Q"
+    );
+    xhr.setRequestHeader("cache-control", "no-cache");
+    xhr.send();
+  };
+  getPhoneLocation = () => {
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        // this.setState({ userLat: position.coords.latitude });
+        // this.setState({ userLong: position.coords.longitude });
+        this.getLatLong(position.coords.latitude, position.coords.longitude);
+      },
+      error => {
+        alert(error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 10000
+      }
+    );
+  };
+  getLatLong = (lat, long) => {
     var xhr = new XMLHttpRequest();
     xhr.withCredentials = true;
 
@@ -146,6 +200,7 @@ class MapScreen extends Component {
     });
   }
   componentDidMount() {
+    // this.getPhoneLocation();
     this.getMapData();
     this.setState(
       {
@@ -164,6 +219,36 @@ class MapScreen extends Component {
           <Canvas ref="canvas" />
         </View>
         <View style={styles.listView}></View>
+        <Modal
+          transparent={false}
+          animationType="none"
+          visible={this.state.LocationModal}
+          onRequestClose={() => {
+            this.ShowModalFunction(!this.state.ModalVisibleStatus);
+          }}
+        >
+          <View style={styles.insideModal}>
+            <Text style={styles.HeaderText}>Pick Store</Text>
+            <TextInput
+              style={styles.zipCode}
+              keyboardType="number-pad"
+              onChangeText={text => this.setState({ userZipCode: text })}
+            />
+            <Button
+              onPress={() => {
+                this.getZipcode(this.state.userZipCode)
+              }}
+              style={styles.getUserLocation}
+              title="Enter"
+            ></Button>
+            <ScrollView style={styles.LocationList}>
+              {/* <ListView
+                dataSource={this.state.dataSource}
+                renderRow={rowData => <Text>{rowData}</Text>}
+              /> */}
+            </ScrollView>
+          </View>
+        </Modal>
       </View>
     );
   }
