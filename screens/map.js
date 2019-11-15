@@ -5,12 +5,20 @@ import {
   Image,
   TextInput,
   ScrollView,
-  ListView,
+  FlatList,
   Modal,
   Button,
-  Text
+  Text,
+  TouchableOpacity,
+  SectionList,
+  Keyboard,
+  TouchableWithoutFeedback
 } from "react-native";
 import Canvas, { Image as CanvasImage } from "react-native-canvas";
+
+require("firebase/firestore");
+const firebase = require("firebase");
+const db = firebase.firestore();
 
 class MapScreen extends Component {
   constructor(props) {
@@ -20,14 +28,15 @@ class MapScreen extends Component {
         "http://www.economicmodeling.com/wp-content/uploads/temp-sticker.jpg",
       storeDetails: [],
       imgdata: "",
-      AuthToken: "",
+      access_token: "",
       LocationModal: true,
-      userZipCode: 0
-      // userLat: "",
-      // userLong: ""
+      userZipCode: "",
+      isleList: [],
+      AllStores: [],
+      ItemData: [],
+      ItemList: []
     };
   }
-  // Change to getCreds/ AuthToken
   handleCanvas = () => {
     canvas = this.refs.canvas;
     const image = new CanvasImage(canvas);
@@ -59,30 +68,31 @@ class MapScreen extends Component {
       IsleLength = this.state.storeDetails.IsleLength / 3;
       context.beginPath();
       context.moveTo(x, y);
-      // i = 0
-      // UserList.forEach(item => {
-      // if(item.isle == i) { // go down isle
-      for (let i = 0; i < 3; i++) {
-        if (onTop) {
-          context.lineTo(x, y + IsleLength);
-          y = y + IsleLength;
-        } else {
-          context.lineTo(x, y - IsleLength);
-          y = y - IsleLength;
-        }
-        context.stroke();
-        onTop = !onTop;
-        // } else { // go to next isle
-        context.lineTo(x + IsleDistance, y);
-        context.stroke();
-        x = x + IsleDistance;
-      }
+      i = 0;
+      this.state.isleList.forEach(item => {
+        if (item.isle == i) {
+          // go down isle
+          for (let i = 0; i < 3; i++) {
+            if (onTop) {
+              context.lineTo(x, y + IsleLength);
+              y = y + IsleLength;
+            } else {
+              context.lineTo(x, y - IsleLength);
+              y = y - IsleLength;
+            }
+            context.stroke();
+            onTop = !onTop;
+            // } else { // go to next isle
+            context.lineTo(x + IsleDistance, y);
+            context.stroke();
+            x = x + IsleDistance;
+          }
 
-      var dataURL = canvas.toDataURL().then(data => {
-        this.setState({ imgdata: data });
+          var dataURL = canvas.toDataURL().then(data => {
+            this.setState({ imgdata: data });
+          });
+        }
       });
-      // }
-      // });
       //  Start at Starting xy
       //  for each of every item
       //      if itemsIlse == 1
@@ -92,50 +102,66 @@ class MapScreen extends Component {
       //          draw line to next isle
     });
   };
-  getCreds = () => {
-    data = "grant_type=client_credentials";
+  // getCreds = () => {
+  //   data = "grant_type=client_credentials&scope=product.compact";
 
+  //   var xhr = new XMLHttpRequest();
+  //   xhr.withCredentials = true;
+
+  //   xhr.onload = loadComplete = () => {
+  //     if (xhr.readyState === 4) {
+  //       this.setState({
+  //         access_token: JSON.parse(xhr.responseText).access_token
+  //       });
+  //     }
+  //   };
+
+  //   xhr.open("POST", "https://api.kroger.com/v1/connect/oauth2/token");
+  //   xhr.setRequestHeader(
+  //     "Authorization",
+  //     "Basic d2hlcmVzLXRoZS1taWxrLWViYTFjMWI1ZTUzOGZlNjlmN2Y0ODM2ZmRjZmQzNWUzOnFYdWttS0ZWUzhTZFp3TG5RN3FEQ3p1TGNLTWdvcmc3"
+  //   );
+  //   xhr.setRequestHeader("Accept", "*/*");
+  //   xhr.setRequestHeader("Cache-Control", "no-cache");
+  //   xhr.setRequestHeader("Host", "api.kroger.com");
+  //   xhr.setRequestHeader("Accept-Encoding", "gzip, deflate");
+  //   xhr.setRequestHeader("Connection", "keep-alive");
+  //   xhr.setRequestHeader("cache-control", "no-cache");
+
+  //   xhr.send(data);
+  // };
+  getZipcode = () => {
     var xhr = new XMLHttpRequest();
     xhr.withCredentials = true;
 
-    xhr.addEventListener("readystatechange", function() {
-      if (this.readyState === 4) {
-        console.log(JSON.parse(this.responseText).access_token);
+    xhr.onload = loadComplete = () => {
+      if (xhr.readyState === 4) {
+        // console.log(JSON.parse(xhr.responseText).data);
+        // this.setState({
+        //   AllStores: JSON.parse(xhr.responseText).data
+        // });
+        temp = [];
+        JSON.parse(xhr.responseText).data.forEach(item => {
+          temp.push({
+            name: item.name,
+            locationID: item.locationId
+          });
+        });
+        this.setState({ AllStores: temp });
+        console.log(this.state.AllStores);
       }
-    });
+    };
 
-    xhr.open("POST", "https://api.kroger.com/v1/connect/oauth2/token");
-    xhr.setRequestHeader(
-      "Authorization",
-      "Basic d2hlcmVzLXRoZS1taWxrLWViYTFjMWI1ZTUzOGZlNjlmN2Y0ODM2ZmRjZmQzNWUzOnFYdWttS0ZWUzhTZFp3TG5RN3FEQ3p1TGNLTWdvcmc3"
+    xhr.open(
+      "GET",
+      `https://api.kroger.com/v1/locations?filter.zipCode.near=${this.state.userZipCode}&filter.radiusInMiles=10&filter.limit=10&filter.chain=SMITHS`
     );
+    xhr.setRequestHeader("Authorization", `Bearer ${this.state.access_token}`);
     xhr.setRequestHeader("Accept", "*/*");
     xhr.setRequestHeader("Cache-Control", "no-cache");
     xhr.setRequestHeader("Host", "api.kroger.com");
     xhr.setRequestHeader("Accept-Encoding", "gzip, deflate");
     xhr.setRequestHeader("Connection", "keep-alive");
-    xhr.setRequestHeader("cache-control", "no-cache");
-
-    xhr.send(data);
-  };
-  getZipcode = zipCode => {
-    var xhr = new XMLHttpRequest();
-    xhr.withCredentials = true;
-
-    xhr.addEventListener("readystatechange", function() {
-      if (this.readyState === 4) {
-        console.log(this.responseText);
-      }
-    });
-
-    xhr.open(
-      "GET",
-      "https://api.kroger.com/v1/locations?filter.zipCode.near=%3Cstring%3E&filter.radiusInMiles=10&filter.limit=10&filter.chain=SMITHS"
-    );
-    xhr.setRequestHeader(
-      "Authorization",
-      "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ilo0RmQzbXNrSUg4OGlydDdMQjVjNmc9PSIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6InByb2R1Y3QuY29tcGFjdCIsImF1dGhBdCI6MTU3MzE1MDA2MjY2NTY4NjM3MCwiYXVkIjoid2hlcmVzLXRoZS1taWxrLWViYTFjMWI1ZTUzOGZlNjlmN2Y0ODM2ZmRjZmQzNWUzIiwiZXhwIjoxNTczMTUxODYyLCJpYXQiOjE1NzMxNTAwNTcsImlzcyI6ImFwaS5rcm9nZXIuY29tIiwic3ViIjoiODAxYzY2ZDAtY2UzNS00MjY5LTgwNDYtZDYzYTI4ZjUzY2QwIn0.o85PLq-DlidFvnzs2GmRaM_ZrRBeVkCBsz8ePk0yui2oaxBvvst2UYnAQnJvZ7XioyDsaKH3Hy3Mx7P-r3TxEIHqBl-DG5xnHBtr2NVSZlzCUkFtYkG5WD53SbS9wM-6jC3tX8VHPnMvcl-wtaY4yrc980vh9cF98vA3i74f7yQM7k6XJVXikHuUABtr7daXgizm5uH2ArcsfMust2jlIY3MrLw-sRaWsutcW9UidEPzfFn-Z3-uKgO7U30vAwohheDVikk43EvSSJzKCb4NUpupLq7bvJbrRjg11Mm_XWtRha_FisxX5lvFEI7aqhOdZD8OOU-kC7mX8QMS940m_Q"
-    );
     xhr.setRequestHeader("cache-control", "no-cache");
     xhr.send();
   };
@@ -160,20 +186,24 @@ class MapScreen extends Component {
     var xhr = new XMLHttpRequest();
     xhr.withCredentials = true;
 
-    xhr.addEventListener("readystatechange", function() {
-      if (this.readyState === 4) {
-        console.log(JSON.parse(this.responseText).data.locationId);
+    xhr.onload = loadComplete = () => {
+      if (xhr.readyState === 4) {
+        temp = [];
+        JSON.parse(xhr.responseText).data.forEach(item => {
+          temp.push({
+            name: item.name,
+            locationID: item.locationId
+          });
+        });
+        this.setState({ AllStores: temp });
       }
-    });
+    };
 
     xhr.open(
       "GET",
       `https://api.kroger.com/v1/locations?filter.latLong.near=${lat},${long}&filter.radiusInMiles=10&filter.limit=10&filter.chain=SMITHS`
     );
-    xhr.setRequestHeader(
-      "Authorization",
-      "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ilo0RmQzbXNrSUg4OGlydDdMQjVjNmc9PSIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6InByb2R1Y3QuY29tcGFjdCIsImF1dGhBdCI6MTU3MzE1MDA2MjY2NTY4NjM3MCwiYXVkIjoid2hlcmVzLXRoZS1taWxrLWViYTFjMWI1ZTUzOGZlNjlmN2Y0ODM2ZmRjZmQzNWUzIiwiZXhwIjoxNTczMTUxODYyLCJpYXQiOjE1NzMxNTAwNTcsImlzcyI6ImFwaS5rcm9nZXIuY29tIiwic3ViIjoiODAxYzY2ZDAtY2UzNS00MjY5LTgwNDYtZDYzYTI4ZjUzY2QwIn0.o85PLq-DlidFvnzs2GmRaM_ZrRBeVkCBsz8ePk0yui2oaxBvvst2UYnAQnJvZ7XioyDsaKH3Hy3Mx7P-r3TxEIHqBl-DG5xnHBtr2NVSZlzCUkFtYkG5WD53SbS9wM-6jC3tX8VHPnMvcl-wtaY4yrc980vh9cF98vA3i74f7yQM7k6XJVXikHuUABtr7daXgizm5uH2ArcsfMust2jlIY3MrLw-sRaWsutcW9UidEPzfFn-Z3-uKgO7U30vAwohheDVikk43EvSSJzKCb4NUpupLq7bvJbrRjg11Mm_XWtRha_FisxX5lvFEI7aqhOdZD8OOU-kC7mX8QMS940m_Q"
-    );
+    xhr.setRequestHeader("Authorization", `Bearer ${this.state.access_token}`);
     xhr.setRequestHeader("Accept", "*/*");
     xhr.setRequestHeader("Cache-Control", "no-cache");
     xhr.setRequestHeader("Host", "api.kroger.com");
@@ -199,8 +229,172 @@ class MapScreen extends Component {
       }
     });
   }
-  componentDidMount() {
-    // this.getPhoneLocation();
+  getItemData = (item, locationId) => {
+    var xhr = new XMLHttpRequest();
+    xhr.withCredentials = true;
+
+    // data[0].aisleLocations[0].description
+
+    xhr.onload = loadComplete = () => {
+      if (xhr.readyState === 4) {
+        console.log(JSON.parse(xhr.responseText).data[0].aisleLocations[0]);
+        if (
+          typeof JSON.parse(xhr.responseText).data[0].aisleLocations[0] ==
+          "undefined"
+        ) {
+          //add to list of items with no isle
+          this.state.ItemData.push({
+            name: item,
+            isle: "none",
+            cost: JSON.parse(xhr.responseText).data[0].items[0].price.regular
+          });
+        } else if (
+          typeof JSON.parse(xhr.responseText).data[0].items[0].price ==
+          "undefined"
+        ) {
+          //push [name: item, isleNumber: number, cost: price]
+          if (
+            JSON.parse(xhr.responseText).data[0].aisleLocations[0].number < 1 ||
+            JSON.parse(xhr.responseText).data[0].aisleLocations[0].number > 30
+          ) {
+            this.state.ItemData.push({
+              name: item,
+              isle: JSON.parse(xhr.responseText).data[0].aisleLocations[0]
+                .description,
+              cost: ""
+            });
+          } else {
+            this.state.ItemData.push({
+              name: item,
+              isle: JSON.parse(xhr.responseText).data[0].aisleLocations[0]
+                .number,
+              cost: ""
+            });
+          }
+        } else {
+          if (
+            JSON.parse(xhr.responseText).data[0].aisleLocations[0].number < 1 ||
+            JSON.parse(xhr.responseText).data[0].aisleLocations[0].number > 30
+          ) {
+            this.state.ItemData.push({
+              name: item,
+              isle: JSON.parse(xhr.responseText).data[0].aisleLocations[0]
+                .description,
+              cost: JSON.parse(
+                xhr.responseText
+              ).data[0].items[0].price.regular.toFixed(2)
+            });
+          } else {
+            this.state.ItemData.push({
+              name: item,
+              isle: JSON.parse(xhr.responseText).data[0].aisleLocations[0]
+                .number,
+              cost: JSON.parse(
+                xhr.responseText
+              ).data[0].items[0].price.regular.toFixed(2)
+            });
+          }
+        }
+        if (this.state.ItemData.length + 1 == this.state.ItemList.length) {
+          this.getListData();
+        }
+      }
+    };
+
+    xhr.open(
+      "GET",
+      `https://api.kroger.com/v1/products?filter.term=${item}&filter.locationId=${locationId}&filter.limit=1`
+    );
+    xhr.setRequestHeader("Authorization", `Bearer ${this.state.access_token}`);
+    xhr.setRequestHeader("Accept", "*/*");
+    xhr.setRequestHeader("Cache-Control", "no-cache");
+    xhr.setRequestHeader("Host", "api.kroger.com");
+    xhr.setRequestHeader("Accept-Encoding", "gzip, deflate");
+    xhr.setRequestHeader("Connection", "keep-alive");
+    xhr.setRequestHeader("cache-control", "no-cache");
+
+    xhr.send();
+  };
+  getList() {
+    var ListName = "List 1";
+    var userId = firebase.auth().currentUser.uid;
+    var usersList;
+    var docRef = db.collection("users").doc(userId);
+    docRef
+      .get()
+      .then(function(doc) {
+        //get items from DB and add to usersList
+        if (doc.exists) {
+          usersList = [];
+          user = doc.data();
+          for (var key in user.Lists) {
+            if (key == ListName) {
+              user.Lists[key].forEach(item => {
+                usersList.push(item);
+              });
+              break;
+            }
+          }
+        }
+      })
+      .catch(function(error) {})
+      .then(() => {
+        this.setState({ ItemData: [] });
+        this.setState({ ItemList: usersList });
+        usersList.forEach(item => {
+          this.getItemData(item, "70600094");
+        });
+      });
+  }
+  getListData() {
+    // get list
+    // this is called after i have the whole list [islelocations, name]
+    // so get that
+    // data[0].aisleLocations[0].description
+    var CatList = [
+      {
+        title: "Loading",
+        data: ["Loading"]
+      }
+    ];
+    CatList = [];
+    this.state.ItemData.forEach(item => {
+      var found = false;
+      var name = item.name;
+      if (item.cost != "") {
+        name = item.name;
+      }
+      for (var i = 0; i < CatList.length; i++) {
+        if (CatList[i].title != undefined && CatList[i].title == item.isle) {
+          //found item cat, add to that cat
+          CatList[i].data.push(name);
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        CatList.push({
+          title: item.isle,
+          data: [name]
+        });
+      }
+    });
+    // set each item with its isle number / location
+    this.setState({
+      isleList: CatList.sort(compare)
+    });
+    function compare(a, b) {
+      const titleA = parseInt(a.title);
+      const titleB = parseInt(b.title);
+
+      let comparison = 0;
+      if (titleA > titleB || titleA == "NaN") {
+        comparison = 1;
+      } else {
+        comparison = -1;
+      }
+      return comparison;
+    }
     this.getMapData();
     this.setState(
       {
@@ -212,47 +406,155 @@ class MapScreen extends Component {
       }
     );
   }
+  componentDidMount() {
+    // this.getCreds();
+    // this.getPhoneLocation();
+    // this.getMapData();
+    // this.setState(
+    //   {
+    //     imgID:
+    //       "https://firebasestorage.googleapis.com/v0/b/wheresthemilk-816ca.appspot.com/o/SmithsLayout.jpg?alt=media&token=1d2f0027-2bc2-464f-9122-a8f4919f0e2b"
+    //   },
+    //   () => {
+    //     this.handleCanvas();
+    //   }
+    // );
+  }
+  // DROP DOWN FOR DIFFERENT STORES
+  // OR ONLY LET KROGER/SMITHS
   render() {
     return (
       <View style={styles.container}>
         <View style={styles.mapView}>
           <Canvas ref="canvas" />
         </View>
-        <View style={styles.listView}></View>
+        <View style={styles.listView}>
+          <SectionList
+            sections={this.state.isleList}
+            renderItem={({ item }) => <Text style={styles.item}>{item}</Text>}
+            renderSectionHeader={({ section }) => {
+              {
+                if (
+                  parseInt(section.title) > 1 &&
+                  parseInt(section.title) < 30
+                ) {
+                  return (
+                    <Text style={styles.sectionHeader}>
+                      Isle {section.title}{" "}
+                    </Text>
+                  );
+                } else {
+                  return (
+                    <Text style={styles.sectionHeader}>{section.title}</Text>
+                  );
+                }
+              }
+            }}
+            keyExtractor={(item, index) => index}
+          />
+        </View>
         <Modal
-          transparent={false}
+          transparent={true}
           animationType="none"
           visible={this.state.LocationModal}
           onRequestClose={() => {
             this.ShowModalFunction(!this.state.ModalVisibleStatus);
           }}
         >
-          <View style={styles.insideModal}>
-            <Text style={styles.HeaderText}>Pick Store</Text>
-            <TextInput
-              style={styles.zipCode}
-              keyboardType="number-pad"
-              onChangeText={text => this.setState({ userZipCode: text })}
-            />
-            <Button
-              onPress={() => {
-                this.getZipcode(this.state.userZipCode)
-              }}
-              style={styles.getUserLocation}
-              title="Enter"
-            ></Button>
-            <ScrollView style={styles.LocationList}>
-              {/* <ListView
-                dataSource={this.state.dataSource}
-                renderRow={rowData => <Text>{rowData}</Text>}
-              /> */}
-            </ScrollView>
-          </View>
+          <TouchableWithoutFeedback
+            onPress={Keyboard.dismiss}
+            accessible={false}
+          >
+            <View style={styles.insideModal}>
+              <Text style={styles.HeaderText}>Pick Store</Text>
+              <Text style={styles.InputLabel}>Search by zip code</Text>
+              <TextInput
+                style={styles.zipCode}
+                // autoFocus={true}
+                placeholder="Search by zipcode"
+                keyboardType="number-pad"
+                onChangeText={text => this.setState({ userZipCode: text })}
+              />
+              <Button
+                onPress={() => {
+                  getCreds.then(res => {
+                    this.setState({
+                      access_token: res
+                    });
+                    this.getZipcode(this.state.userZipCode);
+                  });
+                }}
+                style={styles.getUserLocation}
+                title="Enter"
+              />
+              <Button
+                onPress={() => {
+                  getCreds.then(res => {
+                    this.setState({
+                      access_token: res
+                    });
+                    this.getPhoneLocation();
+                  });
+                }}
+                style={styles.getUserLocation}
+                title="Use phone location"
+              />
+              <ScrollView style={styles.LocationList}>
+                {this.state.AllStores.map((item, index) => (
+                  <TouchableOpacity
+                    activeOpacity={0}
+                    key={item.locationID}
+                    onPress={() => {
+                      this.setState({ LocationModal: false });
+                      this.getList();
+                      // this.getListData();
+                    }}
+                    keyExtractor={item => item}
+                  >
+                    <Text style={styles.locationItem}>{item.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </TouchableWithoutFeedback>
         </Modal>
       </View>
     );
   }
 }
+
+var getCreds = new Promise(function(resolve, reject) {
+  // getCreds = () => {
+  data = "grant_type=client_credentials&scope=product.compact";
+
+  var xhr = new XMLHttpRequest();
+  xhr.withCredentials = true;
+
+  xhr.onload = loadComplete = () => {
+    if (xhr.readyState === 4) {
+      // this.setState({
+      //   access_token: JSON.parse(xhr.responseText).access_token
+      // });
+      // console.log(JSON.parse(xhr.responseText).access_token);
+      resolve(JSON.parse(xhr.responseText).access_token);
+    }
+  };
+
+  xhr.open("POST", "https://api.kroger.com/v1/connect/oauth2/token");
+  xhr.setRequestHeader(
+    "Authorization",
+    "Basic d2hlcmVzLXRoZS1taWxrLWViYTFjMWI1ZTUzOGZlNjlmN2Y0ODM2ZmRjZmQzNWUzOnFYdWttS0ZWUzhTZFp3TG5RN3FEQ3p1TGNLTWdvcmc3"
+  );
+  xhr.setRequestHeader("Accept", "*/*");
+  xhr.setRequestHeader("Cache-Control", "no-cache");
+  xhr.setRequestHeader("Host", "api.kroger.com");
+  xhr.setRequestHeader("Accept-Encoding", "gzip, deflate");
+  xhr.setRequestHeader("Connection", "keep-alive");
+  xhr.setRequestHeader("cache-control", "no-cache");
+
+  xhr.send(data);
+  // };
+});
 
 MapScreen.navigationOptions = {
   header: null
@@ -264,6 +566,40 @@ const styles = StyleSheet.create({
     // flex: 1,
     height: "100%"
     // backgroundColor: "#132640"
+  },
+  mapView: {},
+  listView: {},
+  insideModal: {
+    margin: 15,
+    backgroundColor: "#b2d2dd",
+    height: "70%",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#fff",
+    flexDirection: "column"
+  },
+  HeaderText: { alignSelf: "center", fontSize: 25, margin: 10 },
+  InputLabel: { alignSelf: "center", fontSize: 15, margin: 5 },
+  zipCode: {
+    width: "80%",
+    marginBottom: 15,
+    padding: 15,
+    borderRadius: 4,
+    borderWidth: 0.5,
+    borderColor: "#d6d7da",
+    backgroundColor: "#fff",
+    alignSelf: "center"
+  },
+  getUserLocation: { width: "20%", margin: 5, marginBottom: 10 },
+  LocationList: {},
+  locationItem: {
+    width: "90%",
+    color: "#fff",
+    borderColor: "#d6d7da",
+    // backgroundColor: "#132640",
+    alignSelf: "center",
+    padding: 5,
+    marginBottom: 5
   }
 });
 

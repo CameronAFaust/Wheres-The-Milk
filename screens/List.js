@@ -127,6 +127,7 @@ class HomeScreen extends Component {
   _getInput(item) {
     SelectedList = this.state.ListName;
     var regex = new RegExp(this.state.ItemList.join("|"), "i");
+
     if (item == "") {
       alert("Please type in a word");
     } else if (!regex.test(item)) {
@@ -277,8 +278,8 @@ class HomeScreen extends Component {
         var found = false;
         var name = item.name;
         if (item.cost != "") {
+          total += parseFloat(item.cost);
           name = item.name + " - $" + item.cost;
-          total += item.cost;
         }
         for (var i = 0; i < CatList.length; i++) {
           if (
@@ -318,51 +319,18 @@ class HomeScreen extends Component {
       CatList.push({ title: item.category, data: [item.name] });
     }
   };
-  // save id to state to be used by other functions (needs to be called)
-  getCreds = () => {
-    data = "grant_type=client_credentials&scope=product.compact";
-
-    var xhr = new XMLHttpRequest();
-    xhr.withCredentials = true;
-
-    xhr.onload = loadComplete = () => {
-      if (xhr.readyState === 4) {
-        this.setState({
-          access_token: JSON.parse(xhr.responseText).access_token
-        });
-      }
-    };
-
-    xhr.open("POST", "https://api.kroger.com/v1/connect/oauth2/token");
-    xhr.setRequestHeader(
-      "Authorization",
-      "Basic d2hlcmVzLXRoZS1taWxrLWViYTFjMWI1ZTUzOGZlNjlmN2Y0ODM2ZmRjZmQzNWUzOnFYdWttS0ZWUzhTZFp3TG5RN3FEQ3p1TGNLTWdvcmc3"
-    );
-    xhr.setRequestHeader("Accept", "*/*");
-    xhr.setRequestHeader("Cache-Control", "no-cache");
-    xhr.setRequestHeader("Host", "api.kroger.com");
-    xhr.setRequestHeader("Accept-Encoding", "gzip, deflate");
-    xhr.setRequestHeader("Connection", "keep-alive");
-    xhr.setRequestHeader("cache-control", "no-cache");
-
-    xhr.send(data);
-  };
-  // done? if .push to state works (needs to be called)
   getItemData = (item, locationId) => {
     var xhr = new XMLHttpRequest();
     xhr.withCredentials = true;
 
     xhr.onload = loadComplete = () => {
       if (xhr.readyState === 4) {
-        if (
-          typeof JSON.parse(xhr.responseText).data[0].categories[0] ==
-          "undifined"
-        ) {
+        if (JSON.parse(xhr.responseText).data[0].categories[0] == "undifined") {
           //add to list of items with no isle
           this.state.ItemData.push({
             name: item,
             category: "none",
-            cost: JSON.parse(xhr.responseText).data[0].items[0].price.regular
+            cost: JSON.parse(xhr.responseText).data[0].items[0].price.regular.toFixed(2)
           });
         } else if (
           typeof JSON.parse(xhr.responseText).data[0].items[0].price ==
@@ -378,7 +346,9 @@ class HomeScreen extends Component {
           this.state.ItemData.push({
             name: item,
             category: JSON.parse(xhr.responseText).data[0].categories[0],
-            cost: JSON.parse(xhr.responseText).data[0].items[0].price.regular
+            cost: JSON.parse(
+              xhr.responseText
+            ).data[0].items[0].price.regular.toFixed(2)
           });
         }
       }
@@ -400,16 +370,18 @@ class HomeScreen extends Component {
     xhr.send();
   };
   componentDidMount() {
-    this.getCreds();
+    // this.getCreds();
     const { navigation } = this.props;
     let ListName = this.props.navigation.getParam("name", "List 1");
     if (ListName.item != undefined) {
       ListName = ListName.item;
     }
-    this.setState({
-      ListName: ListName
-    });
-    this.focusListener = navigation.addListener("didFocus", () => {
+    this.setState({ ListName: ListName });
+    getCreds.then(res => {
+      this.setState({
+        access_token: res
+      });
+      // this.focusListener = navigation.addListener("didFocus", () => {
       firebase.auth().onAuthStateChanged(user => {
         if (user) {
           var userId = firebase.auth().currentUser.uid;
@@ -419,10 +391,11 @@ class HomeScreen extends Component {
           this.getCategory();
         }
       });
+      // });
     });
   }
   componentWillUnmount() {
-    this.focusListener.remove();
+    // this.focusListener.remove();
   }
   render() {
     return (
