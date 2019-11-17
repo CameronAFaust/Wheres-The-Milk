@@ -330,7 +330,9 @@ class HomeScreen extends Component {
           this.state.ItemData.push({
             name: item,
             category: "none",
-            cost: JSON.parse(xhr.responseText).data[0].items[0].price.regular.toFixed(2)
+            cost: JSON.parse(
+              xhr.responseText
+            ).data[0].items[0].price.regular.toFixed(2)
           });
         } else if (
           typeof JSON.parse(xhr.responseText).data[0].items[0].price ==
@@ -370,7 +372,6 @@ class HomeScreen extends Component {
     xhr.send();
   };
   componentDidMount() {
-    // this.getCreds();
     const { navigation } = this.props;
     let ListName = this.props.navigation.getParam("name", "List 1");
     if (ListName.item != undefined) {
@@ -381,7 +382,6 @@ class HomeScreen extends Component {
       this.setState({
         access_token: res
       });
-      // this.focusListener = navigation.addListener("didFocus", () => {
       firebase.auth().onAuthStateChanged(user => {
         if (user) {
           var userId = firebase.auth().currentUser.uid;
@@ -391,11 +391,7 @@ class HomeScreen extends Component {
           this.getCategory();
         }
       });
-      // });
     });
-  }
-  componentWillUnmount() {
-    // this.focusListener.remove();
   }
   render() {
     return (
@@ -615,6 +611,33 @@ class HomeScreen extends Component {
     );
   }
 }
+
+var getCreds = new Promise(function(resolve, reject) {
+  data = "grant_type=client_credentials&scope=product.compact";
+
+  var xhr = new XMLHttpRequest();
+  xhr.withCredentials = true;
+
+  xhr.onload = loadComplete = () => {
+    if (xhr.readyState === 4) {
+      resolve(JSON.parse(xhr.responseText).access_token);
+    }
+  };
+
+  xhr.open("POST", "https://api.kroger.com/v1/connect/oauth2/token");
+  xhr.setRequestHeader(
+    "Authorization",
+    "Basic d2hlcmVzLXRoZS1taWxrLWViYTFjMWI1ZTUzOGZlNjlmN2Y0ODM2ZmRjZmQzNWUzOnFYdWttS0ZWUzhTZFp3TG5RN3FEQ3p1TGNLTWdvcmc3"
+  );
+  xhr.setRequestHeader("Accept", "*/*");
+  xhr.setRequestHeader("Cache-Control", "no-cache");
+  xhr.setRequestHeader("Host", "api.kroger.com");
+  xhr.setRequestHeader("Accept-Encoding", "gzip, deflate");
+  xhr.setRequestHeader("Connection", "keep-alive");
+  xhr.setRequestHeader("cache-control", "no-cache");
+
+  xhr.send(data);
+});
 
 HomeScreen.navigationOptions = {
   header: null

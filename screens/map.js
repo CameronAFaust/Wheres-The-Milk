@@ -15,6 +15,7 @@ import {
   TouchableWithoutFeedback
 } from "react-native";
 import Canvas, { Image as CanvasImage } from "react-native-canvas";
+import Display from "react-native-display";
 
 require("firebase/firestore");
 const firebase = require("firebase");
@@ -102,44 +103,12 @@ class MapScreen extends Component {
       //          draw line to next isle
     });
   };
-  // getCreds = () => {
-  //   data = "grant_type=client_credentials&scope=product.compact";
-
-  //   var xhr = new XMLHttpRequest();
-  //   xhr.withCredentials = true;
-
-  //   xhr.onload = loadComplete = () => {
-  //     if (xhr.readyState === 4) {
-  //       this.setState({
-  //         access_token: JSON.parse(xhr.responseText).access_token
-  //       });
-  //     }
-  //   };
-
-  //   xhr.open("POST", "https://api.kroger.com/v1/connect/oauth2/token");
-  //   xhr.setRequestHeader(
-  //     "Authorization",
-  //     "Basic d2hlcmVzLXRoZS1taWxrLWViYTFjMWI1ZTUzOGZlNjlmN2Y0ODM2ZmRjZmQzNWUzOnFYdWttS0ZWUzhTZFp3TG5RN3FEQ3p1TGNLTWdvcmc3"
-  //   );
-  //   xhr.setRequestHeader("Accept", "*/*");
-  //   xhr.setRequestHeader("Cache-Control", "no-cache");
-  //   xhr.setRequestHeader("Host", "api.kroger.com");
-  //   xhr.setRequestHeader("Accept-Encoding", "gzip, deflate");
-  //   xhr.setRequestHeader("Connection", "keep-alive");
-  //   xhr.setRequestHeader("cache-control", "no-cache");
-
-  //   xhr.send(data);
-  // };
   getZipcode = () => {
     var xhr = new XMLHttpRequest();
     xhr.withCredentials = true;
 
     xhr.onload = loadComplete = () => {
       if (xhr.readyState === 4) {
-        // console.log(JSON.parse(xhr.responseText).data);
-        // this.setState({
-        //   AllStores: JSON.parse(xhr.responseText).data
-        // });
         temp = [];
         JSON.parse(xhr.responseText).data.forEach(item => {
           temp.push({
@@ -148,7 +117,6 @@ class MapScreen extends Component {
           });
         });
         this.setState({ AllStores: temp });
-        console.log(this.state.AllStores);
       }
     };
 
@@ -232,12 +200,8 @@ class MapScreen extends Component {
   getItemData = (item, locationId) => {
     var xhr = new XMLHttpRequest();
     xhr.withCredentials = true;
-
-    // data[0].aisleLocations[0].description
-
     xhr.onload = loadComplete = () => {
       if (xhr.readyState === 4) {
-        console.log(JSON.parse(xhr.responseText).data[0].aisleLocations[0]);
         if (
           typeof JSON.parse(xhr.responseText).data[0].aisleLocations[0] ==
           "undefined"
@@ -347,10 +311,6 @@ class MapScreen extends Component {
       });
   }
   getListData() {
-    // get list
-    // this is called after i have the whole list [islelocations, name]
-    // so get that
-    // data[0].aisleLocations[0].description
     var CatList = [
       {
         title: "Loading",
@@ -405,126 +365,109 @@ class MapScreen extends Component {
         this.handleCanvas();
       }
     );
-  }
-  componentDidMount() {
-    // this.getCreds();
-    // this.getPhoneLocation();
-    // this.getMapData();
-    // this.setState(
-    //   {
-    //     imgID:
-    //       "https://firebasestorage.googleapis.com/v0/b/wheresthemilk-816ca.appspot.com/o/SmithsLayout.jpg?alt=media&token=1d2f0027-2bc2-464f-9122-a8f4919f0e2b"
-    //   },
-    //   () => {
-    //     this.handleCanvas();
-    //   }
-    // );
+    this.setState({ showMap: "flex" });
+    this.setState({ showModal: "none" });
   }
   // DROP DOWN FOR DIFFERENT STORES
   // OR ONLY LET KROGER/SMITHS
   render() {
     return (
       <View style={styles.container}>
-        <View style={styles.mapView}>
-          <Canvas ref="canvas" />
-        </View>
-        <View style={styles.listView}>
-          <SectionList
-            sections={this.state.isleList}
-            renderItem={({ item }) => <Text style={styles.item}>{item}</Text>}
-            renderSectionHeader={({ section }) => {
-              {
-                if (
-                  parseInt(section.title) > 1 &&
-                  parseInt(section.title) < 30
-                ) {
-                  return (
-                    <Text style={styles.sectionHeader}>
-                      Isle {section.title}{" "}
-                    </Text>
-                  );
-                } else {
-                  return (
-                    <Text style={styles.sectionHeader}>{section.title}</Text>
-                  );
-                }
-              }
-            }}
-            keyExtractor={(item, index) => index}
-          />
-        </View>
-        <Modal
-          transparent={true}
-          animationType="none"
-          visible={this.state.LocationModal}
-          onRequestClose={() => {
-            this.ShowModalFunction(!this.state.ModalVisibleStatus);
-          }}
-        >
-          <TouchableWithoutFeedback
-            onPress={Keyboard.dismiss}
-            accessible={false}
-          >
-            <View style={styles.insideModal}>
-              <Text style={styles.HeaderText}>Pick Store</Text>
-              <Text style={styles.InputLabel}>Search by zip code</Text>
-              <TextInput
-                style={styles.zipCode}
-                // autoFocus={true}
-                placeholder="Search by zipcode"
-                keyboardType="number-pad"
-                onChangeText={text => this.setState({ userZipCode: text })}
-              />
-              <Button
-                onPress={() => {
-                  getCreds.then(res => {
-                    this.setState({
-                      access_token: res
-                    });
-                    this.getZipcode(this.state.userZipCode);
+        <Display enable={this.state.LocationModal}>
+          <View style={styles.insideModal}>
+            <Text style={styles.HeaderText}>Pick Store</Text>
+            <Text style={styles.InputLabel}>Search by zip code</Text>
+            <TextInput
+              style={styles.zipCode}
+              // autoFocus={true}
+              placeholder="Search by zipcode"
+              keyboardType="number-pad"
+              onChangeText={text => this.setState({ userZipCode: text })}
+            />
+            <Button
+              onPress={() => {
+                getCreds.then(res => {
+                  this.setState({
+                    access_token: res
                   });
-                }}
-                style={styles.getUserLocation}
-                title="Enter"
-              />
-              <Button
-                onPress={() => {
-                  getCreds.then(res => {
-                    this.setState({
-                      access_token: res
-                    });
-                    this.getPhoneLocation();
+                  this.getZipcode(this.state.userZipCode);
+                });
+              }}
+              style={styles.getUserLocation}
+              title="Enter"
+            />
+            <Button
+              onPress={() => {
+                getCreds.then(res => {
+                  this.setState({
+                    access_token: res
                   });
-                }}
-                style={styles.getUserLocation}
-                title="Use phone location"
-              />
-              <ScrollView style={styles.LocationList}>
-                {this.state.AllStores.map((item, index) => (
-                  <TouchableOpacity
-                    activeOpacity={0}
-                    key={item.locationID}
-                    onPress={() => {
-                      this.setState({ LocationModal: false });
-                      this.getList();
-                      // this.getListData();
-                    }}
-                    keyExtractor={item => item}
-                  >
-                    <Text style={styles.locationItem}>{item.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+                  this.getPhoneLocation();
+                });
+              }}
+              style={styles.getUserLocation}
+              title="Use phone location"
+            />
+            <ScrollView style={styles.LocationList}>
+              {this.state.AllStores.map((item, index) => (
+                <TouchableOpacity
+                  activeOpacity={0}
+                  key={item.locationID}
+                  onPress={() => {
+                    this.setState({ LocationModal: false });
+                    this.getList();
+                    // this.getListData();
+                  }}
+                  keyExtractor={item => item}
+                >
+                  <Text style={styles.locationItem}>{item.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </Display>
+        <Display enable={!this.state.LocationModal}>
+          <View style={styles.mapView}>
+            <View style={styles.mapCanvas}>
+              <Canvas ref="canvas" />
             </View>
-          </TouchableWithoutFeedback>
-        </Modal>
+            <View style={styles.listView}>
+              <SectionList
+                sections={this.state.isleList}
+                renderItem={({ item }) => (
+                  <Text style={styles.item}>{item}</Text>
+                )}
+                renderSectionHeader={({ section }) => {
+                  {
+                    if (
+                      parseInt(section.title) > 1 &&
+                      parseInt(section.title) < 30
+                    ) {
+                      return (
+                        <Text style={styles.sectionHeader}>
+                          Isle {section.title}{" "}
+                        </Text>
+                      );
+                    } else {
+                      return (
+                        <Text style={styles.sectionHeader}>
+                          {section.title}
+                        </Text>
+                      );
+                    }
+                  }
+                }}
+                keyExtractor={(item, index) => index}
+              />
+            </View>
+          </View>
+        </Display>
       </View>
     );
   }
 }
 
 var getCreds = new Promise(function(resolve, reject) {
-  // getCreds = () => {
   data = "grant_type=client_credentials&scope=product.compact";
 
   var xhr = new XMLHttpRequest();
@@ -532,10 +475,6 @@ var getCreds = new Promise(function(resolve, reject) {
 
   xhr.onload = loadComplete = () => {
     if (xhr.readyState === 4) {
-      // this.setState({
-      //   access_token: JSON.parse(xhr.responseText).access_token
-      // });
-      // console.log(JSON.parse(xhr.responseText).access_token);
       resolve(JSON.parse(xhr.responseText).access_token);
     }
   };
@@ -553,7 +492,6 @@ var getCreds = new Promise(function(resolve, reject) {
   xhr.setRequestHeader("cache-control", "no-cache");
 
   xhr.send(data);
-  // };
 });
 
 MapScreen.navigationOptions = {
@@ -563,16 +501,26 @@ MapScreen.navigationOptions = {
 const styles = StyleSheet.create({
   container: {
     paddingTop: 20,
-    // flex: 1,
     height: "100%"
-    // backgroundColor: "#132640"
   },
   mapView: {},
   listView: {},
+  sectionHeader: {
+    paddingTop: 2,
+    paddingLeft: 10,
+    paddingRight: 10,
+    paddingBottom: 2,
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: 10,
+    backgroundColor: "rgba(247,247,247,1.0)"
+  },
   insideModal: {
+    alignSelf: "center",
+    width: "90%",
     margin: 15,
     backgroundColor: "#b2d2dd",
-    height: "70%",
+    height: "80%",
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#fff",
