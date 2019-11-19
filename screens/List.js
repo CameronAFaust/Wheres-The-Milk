@@ -12,8 +12,11 @@ import {
   ScrollView,
   FlatList,
   TouchableWithoutFeedback,
-  SectionList
+  SectionList,
+  StatusBar
 } from "react-native";
+import { getStatusBarHeight } from 'react-native-status-bar-height';
+
 
 require("firebase/firestore");
 const firebase = require("firebase");
@@ -656,7 +659,7 @@ const theme = {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 20,
+    paddingTop: getStatusBarHeight(),
     // flex: 1,
     height: "100%",
     backgroundColor: "#132640"

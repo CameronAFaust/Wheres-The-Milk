@@ -12,10 +12,13 @@ import {
   TouchableOpacity,
   SectionList,
   Keyboard,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  Dimensions,
+  StatusBar
 } from "react-native";
 import Canvas, { Image as CanvasImage } from "react-native-canvas";
 import Display from "react-native-display";
+import { getStatusBarHeight } from "react-native-status-bar-height";
 
 require("firebase/firestore");
 const firebase = require("firebase");
@@ -26,13 +29,14 @@ class MapScreen extends Component {
     super(props);
     this.state = {
       imgID:
-        "http://www.economicmodeling.com/wp-content/uploads/temp-sticker.jpg",
+        "https://firebasestorage.googleapis.com/v0/b/wheresthemilk-816ca.appspot.com/o/SmithsLayout.jpg?alt=media&token=1d2f0027-2bc2-464f-9122-a8f4919f0e2b",
       storeDetails: [],
       imgdata: "",
       access_token: "",
       LocationModal: true,
       userZipCode: "",
       isleList: [],
+      allItemsList: [],
       AllStores: [],
       ItemData: [],
       ItemList: []
@@ -40,20 +44,21 @@ class MapScreen extends Component {
   }
   handleCanvas = () => {
     canvas = this.refs.canvas;
+    var { height, width } = Dimensions.get("window");
+    canvas.width = width;
+    canvas.height = height / 2;
+
     const image = new CanvasImage(canvas);
     var imgWidth = 0;
     var imgHeight = 0;
+    const context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height);
     Image.getSize(this.state.imgID, (width, height) => {
       imgWidth = width / 3;
       imgHeight = height / 3;
-      canvas.width = width / 3;
-      canvas.height = height / 3;
       image.crossOrigin = "anonymous";
       image.src = this.state.imgID;
     });
-
-    const context = canvas.getContext("2d");
-    context.clearRect(0, 0, canvas.width, canvas.height);
 
     image.addEventListener("load", () => {
       context.drawImage(image, 0, 0, imgWidth, imgHeight);
@@ -69,31 +74,69 @@ class MapScreen extends Component {
       IsleLength = this.state.storeDetails.IsleLength / 3;
       context.beginPath();
       context.moveTo(x, y);
-      i = 0;
-      this.state.isleList.forEach(item => {
-        if (item.isle == i) {
+      islesCount = 13;
+      j = 0;
+      // isDone = false;
+      for (let i = 1; i < islesCount; i++) {
+        // if (!isDone) {
+        if (this.state.isleList[j].title == i) {
           // go down isle
-          for (let i = 0; i < 3; i++) {
-            if (onTop) {
-              context.lineTo(x, y + IsleLength);
-              y = y + IsleLength;
-            } else {
-              context.lineTo(x, y - IsleLength);
-              y = y - IsleLength;
-            }
-            context.stroke();
-            onTop = !onTop;
-            // } else { // go to next isle
-            context.lineTo(x + IsleDistance, y);
-            context.stroke();
-            x = x + IsleDistance;
+          if (onTop) {
+            context.lineTo(x, y + IsleLength);
+            y = y + IsleLength;
+          } else {
+            context.lineTo(x, y - IsleLength);
+            y = y - IsleLength;
           }
-
-          var dataURL = canvas.toDataURL().then(data => {
-            this.setState({ imgdata: data });
-          });
+          context.stroke();
+          onTop = !onTop;
+          if (j + 1 != this.state.isleList.length) {
+            console.log(this.state.isleList.length);
+            console.log(j + 1);
+            j++;
+          } else {
+            // isDone = true;
+            break;
+          }
+        } else {
+          // go to next isle
+          context.lineTo(x + IsleDistance, y);
+          context.stroke();
+          x = x + IsleDistance;
         }
+        // }
+
+        // }
+      }
+      var dataURL = canvas.toDataURL().then(data => {
+        this.setState({ imgdata: data });
       });
+      // i = 0;
+      // this.state.isleList.forEach(item => {
+      //   if (item.title == i) {
+      //     // go down isle
+      //     for (let i = 0; i < 3; i++) {
+      //       if (onTop) {
+      //         context.lineTo(x, y + IsleLength);
+      //         y = y + IsleLength;
+      //       } else {
+      //         context.lineTo(x, y - IsleLength);
+      //         y = y - IsleLength;
+      //       }
+      //       context.stroke();
+      //       onTop = !onTop;
+      //       // } else { // go to next isle
+      //       context.lineTo(x + IsleDistance, y);
+      //       context.stroke();
+      //       x = x + IsleDistance;
+      //     }
+
+      //     var dataURL = canvas.toDataURL().then(data => {
+      //       this.setState({ imgdata: data });
+      //     });
+      //   }
+      //   i++;
+      // });
       //  Start at Starting xy
       //  for each of every item
       //      if itemsIlse == 1
@@ -317,6 +360,8 @@ class MapScreen extends Component {
         data: ["Loading"]
       }
     ];
+    nonIsleNum = [];
+    IsleNum = [];
     CatList = [];
     this.state.ItemData.forEach(item => {
       var found = false;
@@ -328,33 +373,54 @@ class MapScreen extends Component {
         if (CatList[i].title != undefined && CatList[i].title == item.isle) {
           //found item cat, add to that cat
           CatList[i].data.push(name);
+          if (!isNaN(parseInt(item.isle))) {
+            IsleNum.forEach(itemObj => {
+              if (itemObj.title == item.isle) {
+                itemObj.data.push(name);
+              }
+            });
+          } else {
+            // nonIsleNum[i].data.push(name);
+            nonIsleNum.forEach(itemObj => {
+              if (itemObj.title == item.isle) {
+                itemObj.data.push(name);
+              }
+            });
+          }
+          // console.log(item.isle)
           found = true;
           break;
         }
       }
       if (!found) {
+        if (!isNaN(parseInt(item.isle))) {
+          this.state.isleList.push(item.isle);
+          IsleNum.push({
+            title: item.isle,
+            data: [name]
+          });
+        } else {
+          nonIsleNum.push({
+            title: item.isle,
+            data: [name]
+          });
+        }
         CatList.push({
           title: item.isle,
           data: [name]
         });
       }
     });
-    // set each item with its isle number / location
-    this.setState({
-      isleList: CatList.sort(compare)
+    let temp = IsleNum.sort(function(a, b) {
+      return a.title - b.title;
     });
-    function compare(a, b) {
-      const titleA = parseInt(a.title);
-      const titleB = parseInt(b.title);
+    this.setState({
+      allItemsList: temp.concat(nonIsleNum)
+    });
+    this.setState({
+      isleList: temp
+    });
 
-      let comparison = 0;
-      if (titleA > titleB || titleA == "NaN") {
-        comparison = 1;
-      } else {
-        comparison = -1;
-      }
-      return comparison;
-    }
     this.getMapData();
     this.setState(
       {
@@ -427,38 +493,42 @@ class MapScreen extends Component {
           </View>
         </Display>
         <Display enable={!this.state.LocationModal}>
-          <View style={styles.mapView}>
-            <View style={styles.mapCanvas}>
-              <Canvas ref="canvas" />
-            </View>
-            <View style={styles.listView}>
-              <SectionList
-                sections={this.state.isleList}
-                renderItem={({ item }) => (
-                  <Text style={styles.item}>{item}</Text>
-                )}
-                renderSectionHeader={({ section }) => {
-                  {
-                    if (
-                      parseInt(section.title) > 1 &&
-                      parseInt(section.title) < 30
-                    ) {
-                      return (
-                        <Text style={styles.sectionHeader}>
-                          Isle {section.title}{" "}
-                        </Text>
-                      );
-                    } else {
-                      return (
-                        <Text style={styles.sectionHeader}>
-                          {section.title}
-                        </Text>
-                      );
+          <View>
+            <View style={styles.mapView}>
+              <View style={styles.mapCanvas}>
+                <Canvas ref="canvas" />
+              </View>
+              {/* <View style={styles.listView}> */}
+              <ScrollView style={styles.listView}>
+                <SectionList
+                  sections={this.state.allItemsList}
+                  renderItem={({ item }) => (
+                    <Text style={styles.item}>{item}</Text>
+                  )}
+                  renderSectionHeader={({ section }) => {
+                    {
+                      if (
+                        parseInt(section.title) > 1 &&
+                        parseInt(section.title) < 30
+                      ) {
+                        return (
+                          <Text style={styles.sectionHeader}>
+                            Isle {section.title}{" "}
+                          </Text>
+                        );
+                      } else {
+                        return (
+                          <Text style={styles.sectionHeader}>
+                            {section.title}
+                          </Text>
+                        );
+                      }
                     }
-                  }
-                }}
-                keyExtractor={(item, index) => index}
-              />
+                  }}
+                  keyExtractor={title => title}
+                />
+              </ScrollView>
+              {/* </View> */}
             </View>
           </View>
         </Display>
@@ -500,20 +570,43 @@ MapScreen.navigationOptions = {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 20,
-    height: "100%"
+    paddingTop: getStatusBarHeight(),
+    // flex: 1,
+    height: "100%",
+    backgroundColor: "#132640"
   },
   mapView: {},
-  listView: {},
+  // mapCanvas: { height: "40%" },
+  listView: {
+    // backgroundColor: "#FFF",
+    zIndex: -1,
+    // marginLeft: 20,
+    // marginRight: 20,
+    marginBottom: 50,
+    height: "40%"
+  },
   sectionHeader: {
     paddingTop: 2,
-    paddingLeft: 10,
-    paddingRight: 10,
+    paddingLeft: 20,
+    // paddingRight: 10,
+    width: "100%",
     paddingBottom: 2,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "bold",
     marginBottom: 10,
     backgroundColor: "rgba(247,247,247,1.0)"
+  },
+  item: {
+    color: "white",
+    width: "90%",
+    fontSize: 16,
+    padding: 5,
+    // marginLeft: 20,
+    // padding: 15,
+    borderColor: "#d6d7da",
+    backgroundColor: "#132640",
+    alignSelf: "center",
+    marginBottom: 5
   },
   insideModal: {
     alignSelf: "center",
