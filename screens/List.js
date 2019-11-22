@@ -15,8 +15,7 @@ import {
   SectionList,
   StatusBar
 } from "react-native";
-import { getStatusBarHeight } from 'react-native-status-bar-height';
-
+import { getStatusBarHeight } from "react-native-status-bar-height";
 
 require("firebase/firestore");
 const firebase = require("firebase");
@@ -133,7 +132,7 @@ class HomeScreen extends Component {
 
     if (item == "") {
       alert("Please type in a word");
-    } else if (!regex.test(item)) {
+    } else if (!regex.test(item) || this.state.ItemList.length == 0) {
       this.setState({ ItemList: [...this.state.ItemList, item] });
       var userId = firebase.auth().currentUser.uid;
       const ref = firebase
@@ -375,11 +374,16 @@ class HomeScreen extends Component {
     xhr.send();
   };
   componentDidMount() {
-    const { navigation } = this.props;
-    let ListName = this.props.navigation.getParam("name", "List 1");
-    if (ListName.item != undefined) {
-      ListName = ListName.item;
+    // const { navigation } = this.props;
+    // global.SelectedList = ListName;
+    let ListName = "";
+    if (global.SelectedList == undefined) {
+      ListName = this.props.navigation.getParam("name", "List 1");
+    } else {
+      ListName = global.SelectedList;
     }
+    global.SelectedList = ListName;
+    console.log(ListName);
     this.setState({ ListName: ListName });
     getCreds.then(res => {
       this.setState({
@@ -597,6 +601,7 @@ class HomeScreen extends Component {
                           onPress={() => {
                             this._getInput(item);
                             // this.ShowFavModal(false);
+                            this._getList();
                           }}
                           title={item}
                           accessibilityLabel={item}
@@ -672,14 +677,26 @@ const styles = StyleSheet.create({
     marginRight: 50,
     marginBottom: 10
   },
+  searchBar: {
+    width: "80%",
+    height: 60,
+    marginBottom: 15,
+    padding: 15,
+    borderRadius: 4,
+    borderWidth: 0.5,
+    borderColor: "#d6d7da",
+    backgroundColor: "#fff",
+    alignSelf: "center"
+    // marginTop: 10
+  },
+  searchEnter: {
+    marginLeft: 2,
+    paddingTop: 1
+  },
   autocompleteContainer: {
     flex: 3,
     zIndex: 10
-  },
-  searchEnter: {
-    flex: 2,
-    alignSelf: "center"
-    // backgroundColor: "#b2d2dd"
+    // height: 50,
   },
   onbottom: {
     zIndex: -1,
@@ -687,7 +704,18 @@ const styles = StyleSheet.create({
     marginRight: 20
   },
   addFavorites: {
-    marginBottom: 10
+    marginBottom: 5
+  },
+  sectionHeader: {
+    paddingTop: 2,
+    paddingLeft: 10,
+    paddingRight: 10,
+    paddingBottom: 2,
+    fontSize: 14,
+    fontWeight: "bold",
+    margin: 3,
+    // marginBottom: 3,
+    backgroundColor: "rgba(247,247,247,1.0)"
   },
   ListItem: {
     width: "90%",
@@ -696,8 +724,17 @@ const styles = StyleSheet.create({
     borderColor: "#d6d7da",
     backgroundColor: "#132640",
     alignSelf: "center",
-    marginBottom: 5
+    margin: 3
   },
+  totalPriceView: {
+    justifyContent: "flex-end",
+    margin: 5
+  },
+  totalPriceText: {
+    fontSize: 18,
+    color: "#FFF"
+  },
+
   itemModal: {
     backgroundColor: "rgba(100,100,100, 0.8)"
   },
@@ -715,17 +752,6 @@ const styles = StyleSheet.create({
   modalBack: {
     height: "100%",
     backgroundColor: "rgba(100,100,100, 0.8)"
-  },
-  searchBar: {
-    width: "80%",
-    marginBottom: 15,
-    padding: 15,
-    borderRadius: 4,
-    borderWidth: 0.5,
-    borderColor: "#d6d7da",
-    backgroundColor: "#fff",
-    alignSelf: "center"
-    // marginTop: 10
   },
   ModalListItem: {
     width: "70%",
@@ -747,24 +773,6 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     fontSize: 20,
     marginBottom: 10
-  },
-  sectionHeader: {
-    paddingTop: 2,
-    paddingLeft: 10,
-    paddingRight: 10,
-    paddingBottom: 2,
-    fontSize: 14,
-    fontWeight: "bold",
-    marginBottom: 10,
-    backgroundColor: "rgba(247,247,247,1.0)"
-  },
-  totalPriceView: {
-    justifyContent: "flex-end",
-    margin: 5
-  },
-  totalPriceText: {
-    fontSize: 18,
-    color: "#FFF"
   }
 });
 

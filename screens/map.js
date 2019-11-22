@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { Button, ThemeProvider } from "react-native-elements";
 import {
   StyleSheet,
   View,
@@ -7,7 +8,7 @@ import {
   ScrollView,
   FlatList,
   Modal,
-  Button,
+  // Button,
   Text,
   TouchableOpacity,
   SectionList,
@@ -74,11 +75,13 @@ class MapScreen extends Component {
       IsleLength = this.state.storeDetails.IsleLength / 3;
       context.beginPath();
       context.moveTo(x, y);
-      islesCount = 13;
+      islesCount = 17   ;
       j = 0;
       // isDone = false;
+      // console.log(this.state.isleList);
       for (let i = 1; i < islesCount; i++) {
-        // if (!isDone) {
+        // console.log(this.state.isleList[j].title + " == " + i)
+        // console.log(this.state.isleList[j].title ==  i)
         if (this.state.isleList[j].title == i) {
           // go down isle
           if (onTop) {
@@ -91,11 +94,8 @@ class MapScreen extends Component {
           context.stroke();
           onTop = !onTop;
           if (j + 1 != this.state.isleList.length) {
-            console.log(this.state.isleList.length);
-            console.log(j + 1);
             j++;
           } else {
-            // isDone = true;
             break;
           }
         } else {
@@ -104,46 +104,10 @@ class MapScreen extends Component {
           context.stroke();
           x = x + IsleDistance;
         }
-        // }
-
-        // }
       }
       var dataURL = canvas.toDataURL().then(data => {
         this.setState({ imgdata: data });
       });
-      // i = 0;
-      // this.state.isleList.forEach(item => {
-      //   if (item.title == i) {
-      //     // go down isle
-      //     for (let i = 0; i < 3; i++) {
-      //       if (onTop) {
-      //         context.lineTo(x, y + IsleLength);
-      //         y = y + IsleLength;
-      //       } else {
-      //         context.lineTo(x, y - IsleLength);
-      //         y = y - IsleLength;
-      //       }
-      //       context.stroke();
-      //       onTop = !onTop;
-      //       // } else { // go to next isle
-      //       context.lineTo(x + IsleDistance, y);
-      //       context.stroke();
-      //       x = x + IsleDistance;
-      //     }
-
-      //     var dataURL = canvas.toDataURL().then(data => {
-      //       this.setState({ imgdata: data });
-      //     });
-      //   }
-      //   i++;
-      // });
-      //  Start at Starting xy
-      //  for each of every item
-      //      if itemsIlse == 1
-      //          draw line down isle (specific distence)
-      //          draw line to next isle (specific distence)
-      //      else
-      //          draw line to next isle
     });
   };
   getZipcode = () => {
@@ -174,7 +138,12 @@ class MapScreen extends Component {
     xhr.setRequestHeader("Accept-Encoding", "gzip, deflate");
     xhr.setRequestHeader("Connection", "keep-alive");
     xhr.setRequestHeader("cache-control", "no-cache");
-    xhr.send();
+    var zipCodePattern = /^\d{5}$|^\d{5}-\d{4}$/;
+    if (zipCodePattern.test(this.state.userZipCode)) {
+      xhr.send();
+    } else {
+      // Error handling here
+    }
   };
   getPhoneLocation = () => {
     navigator.geolocation.getCurrentPosition(
@@ -302,7 +271,7 @@ class MapScreen extends Component {
             });
           }
         }
-        if (this.state.ItemData.length + 1 == this.state.ItemList.length) {
+        if (this.state.ItemData.length == this.state.ItemList.length) {
           this.getListData();
         }
       }
@@ -323,7 +292,7 @@ class MapScreen extends Component {
     xhr.send();
   };
   getList() {
-    var ListName = "List 1";
+    var ListName = global.SelectedList;
     var userId = firebase.auth().currentUser.uid;
     var usersList;
     var docRef = db.collection("users").doc(userId);
@@ -387,7 +356,6 @@ class MapScreen extends Component {
               }
             });
           }
-          // console.log(item.isle)
           found = true;
           break;
         }
@@ -460,7 +428,7 @@ class MapScreen extends Component {
                 });
               }}
               style={styles.getUserLocation}
-              title="Enter"
+              title="Search for zip code"
             />
             <Button
               onPress={() => {
@@ -482,7 +450,6 @@ class MapScreen extends Component {
                   onPress={() => {
                     this.setState({ LocationModal: false });
                     this.getList();
-                    // this.getListData();
                   }}
                   keyExtractor={item => item}
                 >
@@ -568,6 +535,18 @@ MapScreen.navigationOptions = {
   header: null
 };
 
+const theme = {
+  Button: {
+    buttonStyle: {
+      width: "80%",
+      alignSelf: "center",
+      margin: 10,
+      // backgroundColor: ""
+      backgroundColor: "#132640"
+    }
+  }
+};
+
 const styles = StyleSheet.create({
   container: {
     paddingTop: getStatusBarHeight(),
@@ -578,10 +557,7 @@ const styles = StyleSheet.create({
   mapView: {},
   // mapCanvas: { height: "40%" },
   listView: {
-    // backgroundColor: "#FFF",
     zIndex: -1,
-    // marginLeft: 20,
-    // marginRight: 20,
     marginBottom: 50,
     height: "40%"
   },
@@ -601,8 +577,6 @@ const styles = StyleSheet.create({
     width: "90%",
     fontSize: 16,
     padding: 5,
-    // marginLeft: 20,
-    // padding: 15,
     borderColor: "#d6d7da",
     backgroundColor: "#132640",
     alignSelf: "center",
@@ -611,9 +585,9 @@ const styles = StyleSheet.create({
   insideModal: {
     alignSelf: "center",
     width: "90%",
-    margin: 15,
+    margin: 10,
     backgroundColor: "#b2d2dd",
-    height: "80%",
+    height: "95%",
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#fff",
@@ -631,16 +605,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignSelf: "center"
   },
-  getUserLocation: { width: "20%", margin: 5, marginBottom: 10 },
+  getUserLocation: { margin: 5 },
   LocationList: {},
   locationItem: {
     width: "90%",
-    color: "#fff",
     borderColor: "#d6d7da",
-    // backgroundColor: "#132640",
+    backgroundColor: "#80afc2",
     alignSelf: "center",
-    padding: 5,
-    marginBottom: 5
+    margin: 3,
+    // color: "#FFF",
+    borderRadius: 4,
+    borderWidth: 0.5,
+    // borderColor: "#d6d7da",
+    // backgroundColor: "#132640",
+    // alignSelf: "center",
+    padding: 10,
+    // marginBottom: 5
   }
 });
 

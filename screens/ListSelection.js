@@ -19,6 +19,7 @@ const db = firebase.firestore();
 
 class ListSelection extends Component {
   constructor(props) {
+    global.SelectedList = "List 1";
     super(props);
     this.state = {
       Lists: [],
@@ -36,6 +37,7 @@ class ListSelection extends Component {
   }
   // Item clicked. move back to Home page with new list
   _changeClick = ListName => {
+    global.SelectedList = ListName;
     this.props.navigation.navigate(
       "Main",
       {},
@@ -258,7 +260,7 @@ class ListSelection extends Component {
                   <TextInput
                     placeholder="Name of new list"
                     style={styles.searchBar}
-                    placeholderTextColor = "#000"
+                    placeholderTextColor="#000"
                     onChangeText={text => {
                       this.setState({ text });
                     }}
@@ -321,7 +323,7 @@ const styles = StyleSheet.create({
     borderColor: "#d6d7da",
     backgroundColor: "#fff",
     alignSelf: "center",
-    margin: 15,
+    margin: 15
   },
   ScrollStyle: {
     height: "100%",
