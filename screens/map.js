@@ -35,6 +35,7 @@ class MapScreen extends Component {
       imgdata: "",
       access_token: "",
       LocationModal: true,
+      Loading: false,
       userZipCode: "",
       isleList: [],
       allItemsList: [],
@@ -75,7 +76,7 @@ class MapScreen extends Component {
       IsleLength = this.state.storeDetails.IsleLength / 3;
       context.beginPath();
       context.moveTo(x, y);
-      islesCount = 17   ;
+      islesCount = 17;
       j = 0;
       // isDone = false;
       // console.log(this.state.isleList);
@@ -107,6 +108,7 @@ class MapScreen extends Component {
       }
       var dataURL = canvas.toDataURL().then(data => {
         this.setState({ imgdata: data });
+        this.setState({ Loading: false });
       });
     });
   };
@@ -388,6 +390,7 @@ class MapScreen extends Component {
     this.setState({
       isleList: temp
     });
+    // this.setState({ Loading: true });
 
     this.getMapData();
     this.setState(
@@ -448,6 +451,7 @@ class MapScreen extends Component {
                   activeOpacity={0}
                   key={item.locationID}
                   onPress={() => {
+                    this.setState({ Loading: true });
                     this.setState({ LocationModal: false });
                     this.getList();
                   }}
@@ -499,6 +503,18 @@ class MapScreen extends Component {
             </View>
           </View>
         </Display>
+        <Modal
+          transparent={false}
+          animationType="none"
+          visible={this.state.Loading}
+        >
+          <View style={styles.LoadingScreen}>
+            <Image
+              style={styles.loadingImg}
+              source={require("../assets/Loading.gif")}
+            />
+          </View>
+        </Modal>
       </View>
     );
   }
@@ -541,7 +557,6 @@ const theme = {
       width: "80%",
       alignSelf: "center",
       margin: 10,
-      // backgroundColor: ""
       backgroundColor: "#132640"
     }
   }
@@ -558,29 +573,33 @@ const styles = StyleSheet.create({
   // mapCanvas: { height: "40%" },
   listView: {
     zIndex: -1,
-    marginBottom: 50,
-    height: "40%"
+    // marginBottom: 50,
+    marginTop: -30,
+    height: "48%"
   },
   sectionHeader: {
-    paddingTop: 2,
-    paddingLeft: 20,
-    // paddingRight: 10,
-    width: "100%",
+    // paddingTop: 2,
+    paddingLeft: 10,
+    paddingRight: 10,
     paddingBottom: 2,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "bold",
-    marginBottom: 10,
-    backgroundColor: "rgba(247,247,247,1.0)"
+    margin: 3,
+    // marginBottom: 3,
+    backgroundColor: "rgba(247,247,247,1.0)",
+    marginLeft: 20,
+    marginRight: 20
   },
   item: {
     color: "white",
     width: "90%",
-    fontSize: 16,
+    marginLeft: 20,
     padding: 5,
+    fontSize: 16,
     borderColor: "#d6d7da",
     backgroundColor: "#132640",
     alignSelf: "center",
-    marginBottom: 5
+    margin: 3
   },
   insideModal: {
     alignSelf: "center",
@@ -619,8 +638,18 @@ const styles = StyleSheet.create({
     // borderColor: "#d6d7da",
     // backgroundColor: "#132640",
     // alignSelf: "center",
-    padding: 10,
+    padding: 10
     // marginBottom: 5
+  },
+  LoadingScreen: {
+    // backgroundColor: "#b2d2dd",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  loadingImg: {
+    width: "30%",
+    height: "30%"
   }
 });
 

@@ -302,7 +302,13 @@ class HomeScreen extends Component {
         }
       });
       // set each item with its isle number / location
-      this.setState({ totalPrice: total });
+      if (total != 0) {
+        this.setState({
+          totalPrice: parseFloat(total).toFixed(2)
+        });
+      } else {
+        this.setState({ totalPrice: 0 });
+      }
     }
     this.setState({ catigoriesList: CatList });
   };
@@ -491,7 +497,7 @@ class HomeScreen extends Component {
         </ScrollView>
         <View style={styles.totalPriceView}>
           <Text style={styles.totalPriceText}>
-            Total: ${parseFloat(this.state.totalPrice).toFixed(2)}
+            Total: ${this.state.totalPrice}
           </Text>
         </View>
         {/* Item Modal */}
