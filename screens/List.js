@@ -395,15 +395,25 @@ class HomeScreen extends Component {
       this.setState({
         access_token: res
       });
-      firebase.auth().onAuthStateChanged(user => {
-        if (user) {
-          var userId = firebase.auth().currentUser.uid;
-          this.setState({ userId: userId });
-          this._getList();
-          this._getFavoritesList();
-          this.getCategory();
-        }
-      });
+      // console.log(firebase.auth().currentUser);
+      if (firebase.auth().currentUser != null) {
+        firebase.auth().onAuthStateChanged(user => {
+          if (user) {
+            var userId = firebase.auth().currentUser.uid;
+            this.setState({ userId: userId });
+            this._getList();
+            this._getFavoritesList();
+            this.getCategory();
+          }
+        });
+      } else {
+        console.log("not loged in");
+        this.props.navigation.navigate(
+          "App",
+          {},
+          this.props.navigation.navigate({ routeName: "Profile" })
+        );
+      }
     });
   }
   render() {

@@ -12,6 +12,7 @@ import {
   Clipboard,
   TouchableOpacity
 } from "react-native";
+import { getStatusBarHeight } from "react-native-status-bar-height";
 require("firebase/firestore");
 const firestore = require("firebase/firestore");
 const firebase = require("firebase");
@@ -311,7 +312,7 @@ ListSelection.navigationOptions = {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 20,
+    paddingTop: getStatusBarHeight(),
     backgroundColor: "#132640",
     color: "#f0f"
   },

@@ -4,9 +4,11 @@ import { createStackNavigator, createAppContainer, createSwitchNavigator } from 
 import MainTabNavigator from './MainTabNavigator';
 
 import Signup from "../screens/Signup";
+import Profile from "../screens/Profile";
 import List from "../screens/List";
 import ListSelection from "../screens/ListSelection";
 const SignUpStack = createStackNavigator({Signup: Signup});
+const ProfileStack = createStackNavigator({Profile: Profile});
 const ListStack = createStackNavigator({ListSelection: ListSelection});
 
 export default createAppContainer(
@@ -15,6 +17,7 @@ export default createAppContainer(
     // Read more at https://reactnavigation.org/docs/en/auth-flow.html
     Main: MainTabNavigator,
     SignUp: SignUpStack,
+    Profile: ProfileStack,
     ListStack: ListStack,
   })
 );

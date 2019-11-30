@@ -56,8 +56,8 @@ class MapScreen extends Component {
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
     Image.getSize(this.state.imgID, (width, height) => {
-      imgWidth = width / 3;
-      imgHeight = height / 3;
+      imgWidth = width / 2.5;
+      imgHeight = height / 2.5;
       image.crossOrigin = "anonymous";
       image.src = this.state.imgID;
     });
@@ -69,11 +69,11 @@ class MapScreen extends Component {
       // x = this.state.storeDetails.vegetables[0];
       // y = this.state.storeDetails.vegetables[0];
       // } else {
-      x = this.state.storeDetails.start[0] / 3;
-      y = this.state.storeDetails.start[1] / 3;
+      x = this.state.storeDetails.start[0] / 2.5;
+      y = this.state.storeDetails.start[1] / 2.5;
       // }
-      IsleDistance = this.state.storeDetails.IsleDistance / 3;
-      IsleLength = this.state.storeDetails.IsleLength / 3;
+      IsleDistance = this.state.storeDetails.IsleDistance / 2.5;
+      IsleLength = this.state.storeDetails.IsleLength / 2.5;
       context.beginPath();
       context.moveTo(x, y);
       islesCount = 17;
@@ -648,8 +648,8 @@ const styles = StyleSheet.create({
     alignItems: "center"
   },
   loadingImg: {
-    width: "30%",
-    height: "30%"
+    width: "20%",
+    height: "20%"
   }
 });
 

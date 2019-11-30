@@ -6,9 +6,11 @@ import {
   Text,
   TouchableOpacity,
   View,
-  TextInput,
-  Button
+  TextInput
+  // Button
 } from "react-native";
+import { Button, ThemeProvider } from "react-native-elements";
+import { getStatusBarHeight } from "react-native-status-bar-height";
 require("firebase/firestore");
 const firebase = require("firebase");
 
@@ -71,64 +73,79 @@ class Signup extends React.Component {
 
   render() {
     return (
-      <View>
-        <TextInput
-          style={styles.inputBox}
-          value={this.state.email}
-          onChangeText={email => this.setState({ email })}
-          placeholder="Email"
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
-        <TextInput
-          style={styles.inputBox}
-          value={this.state.password}
-          onChangeText={password => this.setState({ password })}
-          placeholder="Password"
-          secureTextEntry={true}
-          textContentType="password"
-        />
-        <TouchableOpacity style={styles.button} onPress={() => this._signup()}>
-          <Text style={styles.buttonText}>Signup</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={() => this._Cancel()}>
-          <Text style={styles.buttonText}>Cancel</Text>
-        </TouchableOpacity>
-      </View>
+      <ThemeProvider theme={theme}>
+        <View style={styles.container} keyboardShouldPersistTaps="always">
+          <Text style={styles.title}>Create an account</Text>
+          <TextInput
+            style={styles.inputBox}
+            value={this.state.email}
+            onChangeText={email => this.setState({ email })}
+            placeholder="Email"
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+          <TextInput
+            style={styles.inputBox}
+            value={this.state.password}
+            onChangeText={password => this.setState({ password })}
+            placeholder="Password"
+            secureTextEntry={true}
+            textContentType="password"
+          />
+          <Button
+            style={styles.button}
+            title={"Signup"}
+            onPress={() => this._signup()}
+          ></Button>
+          <Button
+            style={styles.button}
+            title={"Cancel"}
+            onPress={() => this._Cancel()}
+          ></Button>
+        </View>
+      </ThemeProvider>
     );
   }
 }
 
 Signup.navigationOptions = {
-  title: null
+  header: null
+};
+
+const theme = {
+  Button: {
+    buttonStyle: {
+      width: 300,
+      alignSelf: "center"
+      // backgroundColor: ""
+      // backgroundColor: "#132640"
+    }
+  }
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center"
+    backgroundColor: "#132640",
+    paddingTop: getStatusBarHeight(),
+    marginTop: 0
   },
   inputBox: {
-    width: "85%",
-    margin: 10,
+    // flex: 1,
+    width: "80%",
+    // marginLeft: 20,
     padding: 15,
-    fontSize: 16,
-    borderColor: "#d3d3d3",
-    borderBottomWidth: 1,
-    textAlign: "center"
+    borderRadius: 4,
+    borderWidth: 0.5,
+    borderColor: "#132640",
+    backgroundColor: "#fff",
+    alignSelf: "center",
+    marginBottom: 15
+    // marginTop: 50
   },
+  title: { alignSelf: "center", fontSize: 25, margin: 10, color: "#fff" },
   button: {
-    marginTop: 30,
-    marginBottom: 20,
-    paddingVertical: 5,
-    alignItems: "center",
-    backgroundColor: "#FFA611",
-    borderColor: "#FFA611",
-    borderWidth: 1,
-    borderRadius: 5,
-    width: 200
+    margin: 6
   },
   buttonText: {
     fontSize: 20,
