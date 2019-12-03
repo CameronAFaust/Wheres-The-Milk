@@ -197,7 +197,7 @@ class Profile extends Component {
               title={"Create an account"}
               onPress={this.goToSignup.bind(this)}
             ></Button>
-            <Text style={styles.name}>Where's the Milk</Text>
+            <Text style={styles.name}>Where's the Milk?</Text>
           </View>
         </ThemeProvider>
       );

@@ -637,7 +637,7 @@ class HomeScreen extends Component {
                         <Button
                           onPress={() => {
                             this._getInput(item);
-                            // this.ShowFavModal(false);
+                            this.ShowFavModal(false);
                             this._getList();
                           }}
                           title={item}
