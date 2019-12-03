@@ -1,5 +1,9 @@
 import React, { Component } from "react";
-import { withNavigationFocus, Keyboard } from "react-navigation";
+import {
+  withNavigationFocus,
+  Keyboard,
+  NavigationEvents
+} from "react-navigation";
 import Autocomplete from "react-native-autocomplete-input";
 import { Button, ThemeProvider } from "react-native-elements";
 import {
@@ -42,6 +46,7 @@ class HomeScreen extends Component {
       ModalVisibleStatus: false,
       hideAuto: false,
       favoritesModalStatus: false,
+      firstLoad: false,
       ItemList: [],
       searchedAdresses: [],
       CompleteData: [],
@@ -379,9 +384,13 @@ class HomeScreen extends Component {
 
     xhr.send();
   };
+  didRender = () => {
+    console.log("he");
+  };
   componentDidMount() {
     // const { navigation } = this.props;
     // global.SelectedList = ListName;
+    this.setState({ firstLoad: true });
     let ListName = "";
     if (global.SelectedList == undefined) {
       ListName = this.props.navigation.getParam("name", "List 1");
@@ -389,36 +398,46 @@ class HomeScreen extends Component {
       ListName = global.SelectedList;
     }
     global.SelectedList = ListName;
-    console.log(ListName);
+    // console.log(ListName);
     this.setState({ ListName: ListName });
     getCreds.then(res => {
       this.setState({
         access_token: res
       });
       // console.log(firebase.auth().currentUser);
-      if (firebase.auth().currentUser != null) {
-        firebase.auth().onAuthStateChanged(user => {
-          if (user) {
-            var userId = firebase.auth().currentUser.uid;
-            this.setState({ userId: userId });
-            this._getList();
-            this._getFavoritesList();
-            this.getCategory();
-          }
-        });
-      } else {
-        console.log("not loged in");
-        this.props.navigation.navigate(
-          "App",
-          {},
-          this.props.navigation.navigate({ routeName: "Profile" })
-        );
-      }
+      // if (firebase.auth().currentUser != null) {
+      console.log("here");
+      firebase.auth().onAuthStateChanged(user => {
+        if (user) {
+          var userId = firebase.auth().currentUser.uid;
+          this.setState({ userId: userId });
+          this._getList();
+          this._getFavoritesList();
+          this.getCategory();
+        }
+      });
+      // } else {
+      // console.log("not loged in");
+      // this.props.navigation.navigate(
+      //   "App",
+      //   {},
+      //   this.props.navigation.navigate({ routeName: "Profile" })
+      // );
+      // }
     });
   }
   render() {
     return (
       <View style={styles.container} keyboardShouldPersistTaps="always">
+        {/* <NavigationEvents
+          onDidFocus={() => {
+            if (!this.state.firstLoad) {
+              this.componentDidMount();
+              console.log(!this.state.firstLoad)
+            }
+            this.setState({ firstLoad: false });
+          }}
+        /> */}
         <ThemeProvider theme={theme}>
           <Button
             onPress={() => {
@@ -435,6 +454,7 @@ class HomeScreen extends Component {
               size: 15,
               color: "white"
             }}
+            style={styles.changeList}
             accessibilityLabel="Change List"
           />
         </ThemeProvider>
@@ -534,6 +554,7 @@ class HomeScreen extends Component {
                     onPress={() => {
                       this._saveToFavorites(this.state.EditItem);
                     }}
+                    title="Add to favorites"
                     icon={{
                       name: "star",
                       size: 15,
@@ -685,6 +706,9 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: "#132640"
   },
+  // changeList: {
+  //   backgroundColor: "#d6d7da"
+  // },
   Search: {
     display: "flex",
     flexDirection: "row",
@@ -777,8 +801,11 @@ const styles = StyleSheet.create({
   favoriteListItem: {
     top: 10,
     left: 10,
-    width: 40,
-    marginBottom: 15
+    width: "70%",
+    alignSelf: "center",
+
+    // width: 40,
+    marginBottom: 25
   },
   backButton: {
     width: "20%",

@@ -197,6 +197,7 @@ class Profile extends Component {
               title={"Create an account"}
               onPress={this.goToSignup.bind(this)}
             ></Button>
+            <Text style={styles.name}>Where's the Milk</Text>
           </View>
         </ThemeProvider>
       );
@@ -271,6 +272,16 @@ const styles = StyleSheet.create({
   },
   buttonSignup: {
     fontSize: 12
+  },
+  name: {
+    alignSelf: "center",
+    fontSize: 25,
+    color: "#fff",
+    // margin: 10,
+    // color: "#fff",
+    // marginBottom: 15
+    position: "absolute",
+    bottom: 10
   }
 });
 
